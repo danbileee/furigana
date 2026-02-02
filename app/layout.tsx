@@ -19,7 +19,7 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "AI Japanese Reading Assistant",
+  title: "AI Furigana Assistant",
   description:
     "Read Japanese paragraphs easily with AI-generated furigana. Paste text and see readings above kanji or on hover.",
   icons: {

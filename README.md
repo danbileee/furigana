@@ -130,13 +130,28 @@ At any time you can:
 
 ---
 
-## 3. Future plans: history persistence & user management
+## 3. Future plans
 
 The current app is an **MVP**: history is stored **only in `localStorage`** and there is **no authentication**. The implementation is intentionally **migration‑friendly** so we can move to a production setup later.
 
 Based on the plan in `.cursor/plans/ai_japanese_reading_assistant_d4573b6c.plan.md`, future work is organized into three main areas:
 
-### 3.1. Server‑side history persistence (Upstash Redis)
+### 3.1. Live streaming of OpenAI responses
+
+Goal: improve perceived performance and UX by **streaming furigana HTML as it is generated**, instead of waiting for the full response.
+
+Planned steps:
+
+- Update `POST /api/furigana` (or add a new route) to use **streaming responses** from the OpenAI Chat Completions API.
+- On the client, replace the single `fetch`/`res.json()` call with a **stream reader** (e.g. `ReadableStream` + `TextDecoder`), progressively building the HTML string.
+- Render a **streaming furigana display**:
+  - Show partial `<ruby><rt>` output as it arrives.
+  - Keep the same sanitizer (`sanitize-furigana-html`) in the loop so only safe `<ruby>/<rt>` tags are rendered.
+- Optionally show a small “Streaming…” indicator while the response is not complete.
+
+This keeps the UI responsive for long paragraphs and gives immediate feedback while the model is still generating.
+
+### 3.2. Server‑side history persistence (Upstash Redis)
 
 Goal: move history from localStorage to a **server‑side store** so users can keep their reading history across devices.
 
@@ -155,7 +170,7 @@ Planned steps:
 
 The UI (`useHistory` hook + sidebar) **does not need major changes**; it keeps calling the history client.
 
-### 3.2. User management (Google login)
+### 3.3. User management (Google login)
 
 Goal: restrict **persistent history** to **logged‑in users**, while keeping the reader usable without an account.
 
@@ -171,7 +186,7 @@ Planned steps:
   - Hide or disable the history sidebar (e.g. show “Sign in to save history”).
   - Do **not** persist history server‑side.
 
-### 3.3. Logout behavior & migration order
+### 3.4. Logout behavior & migration order
 
 Behavior:
 
