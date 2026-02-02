@@ -16,20 +16,27 @@ function escapeHtml(s: string): string {
 export function sanitizeFuriganaHtml(html: string): string {
   if (typeof html !== "string") return "";
 
+  // Normalize any <br> or <br /> from the model into plain newlines so we
+  // can treat all line breaks uniformly and reinsert them as <br> later.
+  const normalized = html.replace(/<br\s*\/?>/gi, "\n");
+
   const rubyRe =
     /<ruby\s*>([\s\S]*?)<rt\s*>([\s\S]*?)<\/rt\s*>[\s\S]*?<\/ruby>/gi;
   let result = "";
   let lastIndex = 0;
   let m: RegExpExecArray | null;
 
-  while ((m = rubyRe.exec(html)) !== null) {
-    result += escapeHtml(html.slice(lastIndex, m.index));
+  while ((m = rubyRe.exec(normalized)) !== null) {
+    result += escapeHtml(normalized.slice(lastIndex, m.index));
     const base = m[1].replace(/<[^>]+>/g, "").trim();
     const reading = m[2].trim();
     result += `<ruby>${escapeHtml(base)}<rt>${escapeHtml(reading)}</rt></ruby>`;
     lastIndex = rubyRe.lastIndex;
   }
 
-  result += escapeHtml(html.slice(lastIndex));
-  return result;
+  result += escapeHtml(normalized.slice(lastIndex));
+
+  // After sanitizing, convert line breaks to <br> so textarea newlines
+  // are preserved visually without breaking ruby tags.
+  return result.replace(/\r\n|\r|\n/g, "<br>");
 }
