@@ -19,9 +19,15 @@ const notoSansJP = Noto_Sans_JP({
 });
 
 export const metadata: Metadata = {
-  title: "Japanese Reading Assistant",
+  title: "AI Japanese Reading Assistant",
   description:
     "Read Japanese paragraphs easily with AI-generated furigana. Paste text and see readings above kanji or on hover.",
+  icons: {
+    icon: "/favicon.ico",
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+  manifest: "/site.webmanifest",
 };
 
 export default function RootLayout({
