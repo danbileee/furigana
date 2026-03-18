@@ -39,3 +39,6 @@ dev-debug.log
 # Playwright
 playwright-report/
 test-results/
+
+# Sentry Config File
+.env.sentry-build-plugin
