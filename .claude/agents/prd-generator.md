@@ -97,7 +97,7 @@ Before finalizing the PRD:
 **Output Requirements**:
 
 - Generate the PRD in markdown format
-- (IMPORTANT) Save it to the path: `docs/prds/{YYYY-MM-DD}/prd.md` (use today's date: 2026-03-17)
+- (IMPORTANT) Save it to the path: `.taskmaster/docs/plans/{yyyy-mm-dd}/prd.md` (use today's date: 2026-03-18)
 - Present the final PRD in a clear, readable format
 - Confirm the file path where the PRD will be saved
 - After generating the complete PRD, perform the quality assurance process outlined above and refine the document

@@ -174,7 +174,7 @@ Generate the roadmap in markdown with the following structure:
 
 ## Output Location
 
-(IMPORTANT) Save the generated roadmap to: `docs/prds/{YYYY-MM-DD}/roadmap.md` (use today's date: 2026-03-17)
+(IMPORTANT) Save the generated roadmap to: `.taskmaster/docs/plans/{yyyy-mm-dd}/roadmap.md` (use today's date: 2026-03-18)
 
 Create any necessary directories if they don't exist.
 

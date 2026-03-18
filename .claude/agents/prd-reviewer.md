@@ -169,7 +169,7 @@ Your review output must be a Markdown document with this structure:
    - Ensure decision points are clearly articulated
    - Verify all third-party claims against official sources
 
-5. **Output File Path**: (IMPORTANT) Save your review as `docs/prds/{YYYY-MM-DD}/prd-review.md`
+5. **Output File Path**: (IMPORTANT) Save your review as `.taskmaster/docs/plans/{yyyy-mm-dd}/prd-review.md`
 
 ## Update Your Agent Memory
 
