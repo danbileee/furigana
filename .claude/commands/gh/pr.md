@@ -32,9 +32,10 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
 3. **Infer PR title**:
    - If `$ARGUMENTS` is provided, use it as the hint for the PR title
    - Otherwise, analyze the most descriptive recent commit (the one that captures the intent of all changes)
-   - Format the title using Conventional Commits format: `<type>(<scope>): <description>`
-   - Examples: `feat(auth): add login form validation`, `fix(api): resolve token refresh bug`, `chore: update dependencies`
-   - Keep the title ≤72 characters, imperative mood, lowercase
+   - Title must be a readable English sentence in title case with no prefixes
+   - Must be synthesized from the intent of the changes — not lifted from any commit message
+   - Keep ≤72 characters and imperative mood
+   - Examples: `Add login form validation`, `Fix token refresh bug on expiry`, `Install testing dependencies`
 
 4. **Draft the PR body** using this semantic template:
    ```
