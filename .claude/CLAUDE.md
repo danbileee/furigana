@@ -92,3 +92,7 @@ VITE_SENTRY_DSN=
 - **NestJS API exceptions**: `apps/api/**/*.ts` relaxes `no-unsafe-call`, `no-unsafe-member-access`, and `no-unsafe-assignment` for decorators.
 - **Prettier integration**: Runs last in the ESLint chain to disable conflicting formatting rules.
 - **Pre-commit hooks**: `lint-staged` runs ESLint and Prettier on staged files via Husky.
+
+## Task Master AI Instructions
+**Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
+@./.taskmaster/CLAUDE.md
