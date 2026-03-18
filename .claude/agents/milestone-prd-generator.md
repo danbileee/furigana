@@ -1,6 +1,6 @@
 ---
 name: milestone-prd-generator
-description: "Use this agent when you need to generate a detailed sub-PRD for a specific milestone from a larger product roadmap. This agent is essential when you have a master PRD and roadmap document and need to break down a particular milestone into actionable specifications and implementation details.\\n\\nExamples:\\n- <example>\\nContext: A solopreneur developer has a 6-month product roadmap with 4 milestones and needs to start building the second milestone.\\nuser: \"Here's our master PRD and roadmap. Can you generate a sub-PRD for the 'Authentication System' milestone scheduled for Q2?\"\\nassistant: \"I'll analyze your master PRD and roadmap to extract all specifications and implementation details relevant to the Authentication System milestone.\"\\n<function call>\\nAgent tool call to milestone-prd-generator with the PRD and roadmap documents\\n</function>\\nassistant: \"I've generated a comprehensive sub-PRD for your Authentication System milestone. Here's what I've included: detailed feature specifications, user journeys, implementation roadmap with architectural focus, test strategy, and success criteria. The document has been created at `.taskmaster/docs/plans/{date}/prd.md`.\"\\n</example>\\n- <example>\\nContext: A developer is mid-project and realizes they need clarification on what should be delivered in the current milestone to avoid scope creep.\\nuser: \"I'm working on the payment processing milestone but I'm not sure what's in scope. Can you generate a clear sub-PRD for this milestone from our master documents?\"\\nassistant: \"I'll extract and synthesize the payment processing milestone details from your master PRD and roadmap to create a focused sub-PRD.\"\\n<function call>\\nAgent tool call to milestone-prd-generator with the relevant documents\\n</function>\\nassistant: \"Done. The sub-PRD clarifies scope, dependencies, and success criteria for the payment processing milestone. You now have clear feature specifications and implementation roadmap to guide development.\"\\n</example>"
+description: "Use this agent when you need to generate a detailed sub-PRD for a specific milestone from a larger product roadmap. This agent is essential when you have a master PRD and roadmap document and need to break down a particular milestone into actionable specifications and implementation details.\\n\\nExamples:\\n- <example>\\nContext: A solopreneur developer has a 6-month product roadmap with 4 milestones and needs to start building the second milestone.\\nuser: \"Here's our master PRD and roadmap. Can you generate a sub-PRD for the 'Authentication System' milestone scheduled for Q2?\"\\nassistant: \"I'll analyze your master PRD and roadmap to extract all specifications and implementation details relevant to the Authentication System milestone.\"\\n<function call>\\nAgent tool call to milestone-prd-generator with the PRD and roadmap documents\\n</function>\\nassistant: \"I've generated a comprehensive sub-PRD for your Authentication System milestone. Here's what I've included: detailed feature specifications, user journeys, implementation roadmap with architectural focus, test strategy, and success criteria. The document has been created at `.taskmaster/docs/plans/2026-03-17 MVP/milestones/1-prd-Authentication System.md`.\"\\n</example>\\n- <example>\\nContext: A developer is mid-project and realizes they need clarification on what should be delivered in the current milestone to avoid scope creep.\\nuser: \"I'm working on the payment processing milestone but I'm not sure what's in scope. Can you generate a clear sub-PRD for this milestone from our master documents?\"\\nassistant: \"I'll extract and synthesize the payment processing milestone details from your master PRD and roadmap to create a focused sub-PRD.\"\\n<function call>\\nAgent tool call to milestone-prd-generator with the relevant documents\\n</function>\\nassistant: \"Done. The sub-PRD clarifies scope, dependencies, and success criteria for the payment processing milestone. You now have clear feature specifications and implementation roadmap to guide development.\"\\n</example>"
 tools: Bash, Glob, Grep, Read, WebFetch, WebSearch, Skill, TaskCreate, TaskGet, TaskUpdate, TaskList, LSP, EnterWorktree, ExitWorktree, CronCreate, CronDelete, CronList, ToolSearch, mcp__ide__getDiagnostics, mcp__ide__executeCode, mcp__context7, mcp__task-master-ai
 model: sonnet
 color: orange
@@ -111,7 +111,10 @@ Include a section analyzing:
 - Use clear, technical language appropriate for implementation
 
 ### File Path
-- Save to `.taskmaster/docs/plans/{yyyy-mm-dd}/prd.md` where the date matches today's date
+- Save to `.taskmaster/docs/plans/{date-flag} {scope-name}/milestones/{milestone-number}-prd-{Milestone Name}.md` where:
+  - `date-flag` is supplied by the user (e.g., `2026-03-17`) and specify the exact matching directory by using the date flag as a prefix
+  - `milestone-number` is the milestone's number (e.g., `1`)
+  - `Milestone Name` is the milestone name in Pascal Case with spaces preserved (e.g., `Core Reader UI`)
 - Ensure directory structure exists; create if necessary
 
 ### Quality Standards
@@ -127,10 +130,11 @@ Before finalizing the document:
 ## Input Processing
 
 When you receive a request:
-1. Ask for the master PRD document and roadmap if not provided
-2. Ask for the specific milestone name or identifier to focus on
-3. Ask any clarifying questions about the project context, technology stack, or constraints
-4. Begin analysis only when you have sufficient information
+1. Ask for the **date flag** (e.g., `2026-03-17`). You will use this as a prefix match against directory names under `.taskmaster/docs/plans/` — the actual directory may have a suffix (e.g., `2026-03-17 MVP`). Locate the matching directory and save output into its `milestones/` subdirectory.
+2. Ask for the master PRD document and roadmap if not provided
+3. Ask for the specific milestone name or identifier to focus on
+4. Ask any clarifying questions about the project context, technology stack, or constraints
+5. Begin analysis only when you have sufficient information
 
 ## Communication Style
 
