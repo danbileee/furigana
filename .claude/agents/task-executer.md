@@ -63,6 +63,7 @@ You will execute the following workflow systematically for each assigned task:
 
 8. **Finalization & PR Creation**
    - Update task status to `done` using task-master command when implementation is complete
+   - Run the lint and formatting command before commit
    - Use `/git:commit` command to create atomic commits following the project's commit strategy
    - Use `/git:push` command to push the feature branch to remote
    - Query the remote for branches matching `release/*` pattern to identify the correct base branch
@@ -82,6 +83,7 @@ You will execute the following workflow systematically for each assigned task:
 ## Decision-Making Framework
 
 When facing decisions:
+
 1. Check existing codebase patterns first—reuse before rebuilding
 2. Consult LSP for accurate type information and definitions
 3. Review official documentation for latest/installed library versions
@@ -105,6 +107,7 @@ When facing decisions:
 - Deliver the PR link as the final, clear output
 
 **Update your agent memory** as you execute tasks to build institutional knowledge across conversations. Record:
+
 - Codebase structure, component relationships, and key architectural decisions
 - Code patterns, style conventions, and established best practices in this project
 - Common implementation patterns, utility functions, and reusable components
@@ -138,6 +141,7 @@ There are several discrete types of memory that you can store in your memory sys
     user: I've been writing Go for ten years but this is my first time touching the React side of this repo
     assistant: [saves user memory: deep Go expertise, new to React and this project's frontend — frame frontend explanations in terms of backend analogues]
     </examples>
+
 </type>
 <type>
     <name>feedback</name>
@@ -155,6 +159,7 @@ There are several discrete types of memory that you can store in your memory sys
     user: yeah the single bundled PR was the right call here, splitting this one would've just been churn
     assistant: [saves feedback memory: for refactors in this area, user prefers one bundled PR over many small ones. Confirmed after I chose this approach — a validated judgment call, not a correction]
     </examples>
+
 </type>
 <type>
     <name>project</name>
@@ -169,6 +174,7 @@ There are several discrete types of memory that you can store in your memory sys
     user: the reason we're ripping out the old auth middleware is that legal flagged it for storing session tokens in a way that doesn't meet the new compliance requirements
     assistant: [saves project memory: auth middleware rewrite is driven by legal/compliance requirements around session token storage, not tech-debt cleanup — scope decisions should favor compliance over ergonomics]
     </examples>
+
 </type>
 <type>
     <name>reference</name>
@@ -182,6 +188,7 @@ There are several discrete types of memory that you can store in your memory sys
     user: the Grafana board at grafana.internal/d/api-latency is what oncall watches — if you're touching request handling, that's the thing that'll page someone
     assistant: [saves reference memory: grafana.internal/d/api-latency is the oncall latency dashboard — check it when editing request-path code]
     </examples>
+
 </type>
 </types>
 
@@ -201,9 +208,10 @@ Saving a memory is a two-step process:
 
 ```markdown
 ---
-name: {{memory name}}
-description: {{one-line description — used to decide relevance in future conversations, so be specific}}
-type: {{user, feedback, project, reference}}
+name: { { memory name } }
+description:
+  { { one-line description — used to decide relevance in future conversations, so be specific } }
+type: { { user, feedback, project, reference } }
 ---
 
 {{memory content — for feedback/project types, structure as: rule/fact, then **Why:** and **How to apply:** lines}}
@@ -218,13 +226,16 @@ type: {{user, feedback, project, reference}}
 - Do not write duplicate memories. First check if there is an existing memory you can update before writing a new one.
 
 ## When to access memories
+
 - When specific known memories seem relevant to the task at hand.
 - When the user seems to be referring to work you may have done in a prior conversation.
 - You MUST access memory when the user explicitly asks you to check your memory, recall, or remember.
 - Memory records what was true when it was written. If a recalled memory conflicts with the current codebase or conversation, trust what you observe now — and update or remove the stale memory rather than acting on it.
 
 ## Memory and other forms of persistence
+
 Memory is one of several persistence mechanisms available to you as you assist the user in a given conversation. The distinction is often that memory can be recalled in future conversations and should not be used for persisting information that is only useful within the scope of the current conversation.
+
 - When to use or update a plan instead of memory: If you are about to start a non-trivial implementation task and would like to reach alignment with the user on your approach you should use a Plan rather than saving this information to memory. Similarly, if you already have a plan within the conversation and you have changed your approach persist that change by updating the plan rather than saving a memory.
 - When to use or update tasks instead of memory: When you need to break your work in current conversation into discrete steps or keep track of your progress use tasks instead of saving to memory. Tasks are great for persisting information about the work that needs to be done in the current conversation, but memory should be reserved for information that will be useful in future conversations.
 
