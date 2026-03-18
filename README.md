@@ -1,4 +1,4 @@
-# @starterkit/web
+# furigana
 
 React Router v7 web application with SSR, Tailwind CSS v4, and shadcn/ui.
 

@@ -1,6 +1,13 @@
 {
-  "name": "@starterkit/web",
-  "private": true,
+  "name": "furigana",
+  "description": "Furigana is a web application that helps you read Japanese with AI assistance.",
+  "version": "0.0.1",
+  "author": "Danbi Lee <hello@danbileee.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/furigana/furigana.git"
+  },
   "type": "module",
   "scripts": {
     "dev": "react-router dev",
