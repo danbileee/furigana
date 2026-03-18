@@ -9,7 +9,7 @@
 
 Furigana MVP is a React Router v7 (SSR) single-page application that allows Japanese learners to paste arbitrary text, receive AI-generated furigana annotations via GPT-4o-mini, and browse a persistent reading history. The core architectural loop — textarea input → server-side `action` → GPT-4o-mini API → annotation string → ruby HTML rendering → Sanity write — runs through a single route and establishes the foundation every other feature builds on. All subsequent features (history sidebar, view mode toggle, AI title generation, soft-delete, inline editing) are additive layers on top of this loop rather than parallel tracks.
 
-The phasing strategy follows the review's recommended implementation sequence closely: the core generation loop ships first to validate the primary value proposition, then Sanity storage is layered in to enable persistence, followed by progressive feature additions in order of user-facing impact. Two parallelizable workstreams (relative timestamps, session persistence) can proceed concurrently in later phases. Mobile-specific behaviors are deferred to a dedicated final phase. The estimated total timeline for a single engineer is approximately 3–4 weeks of focused work.
+The milestone sequencing strategy follows the review's recommended implementation sequence closely: the core generation loop ships first to validate the primary value proposition, then Sanity storage is layered in to enable persistence, followed by progressive feature additions in order of user-facing impact. Two parallelizable workstreams (relative timestamps, session persistence) can proceed concurrently in later milestones. Mobile-specific behaviors are deferred to a dedicated final milestone. The estimated total timeline for a single engineer is approximately 3–4 weeks of focused work.
 
 ---
 
@@ -25,7 +25,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 - **Option B: CSS class + minimal JS touch handler per `<ruby>` element**
   Apply the same `@media (pointer: fine)` gate for mouse hover, and add a `click`/`touchstart` handler on each `<ruby>` element that toggles an `.active` class; CSS reveals `<rt>` for `.active ruby`. This is deterministic, testable, and eliminates cross-browser sticky-hover inconsistency. A tap on one word shows its reading; a second tap on the same word (or a tap elsewhere with `touchstart` delegation from the container) hides it. No full React re-render — only a class toggle on a DOM node. Trade-off: each reading view mounts and tears down event listeners; for a 10,000-character article this could be hundreds of listeners. Delegation from a single container element (one `touchstart` listener that walks up to the nearest `<ruby>` ancestor) mitigates this entirely.
 
-  **Recommended approach**: Option B with event delegation from the reading container. This is implemented in Phase 8 as part of the dedicated mobile support phase.
+  **Recommended approach**: Option B with event delegation from the reading container. This is implemented in Milestone 8 as part of the dedicated mobile support milestone.
 
 ### Decision 2: Sidebar Desktop/Mobile Rendering Strategy
 
@@ -37,7 +37,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 - **Option B: Conditional rendering — fixed column on desktop, Sheet on mobile**
   At the desktop breakpoint, render `<Sidebar>` directly. Below the breakpoint, render `<Sheet><Sidebar /></Sheet>`. Requires a `useMediaQuery` hook (or `window.matchMedia`) to branch the render path. Cleaner focus trapping and scroll isolation. Trade-off: sidebar state resets on breakpoint crossing; requires client-side breakpoint detection (unavailable during SSR, so initial render always uses one branch until hydration).
 
-  **Recommended approach**: Option A with a single sidebar component and CSS-controlled visibility. The SSR compatibility and simpler state model outweigh the minor focus-trapping complexity, which can be handled by conditionally enabling `trapFocus` on the `Sheet` wrapper based on viewport. Mobile drawer implementation is deferred to Phase 8.
+  **Recommended approach**: Option A with a single sidebar component and CSS-controlled visibility. The SSR compatibility and simpler state model outweigh the minor focus-trapping complexity, which can be handled by conditionally enabling `trapFocus` on the `Sheet` wrapper based on viewport. Mobile drawer implementation is deferred to Milestone 8.
 
 ### Decision 3: Sanity Read Strategy for Sidebar History
 
@@ -56,11 +56,11 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-## Phased Implementation Roadmap
+## Milestone-Based Implementation Roadmap
 
-### Phase 1: Core Generation Loop
+### Milestone 1: Core Generation Loop
 
-**Objective**: Establish the end-to-end path from text input to furigana-rendered reading view, including the annotation string parser, ruby HTML rendering, and all input/output edge case handling. No persistence in this phase — the generated result lives only in route action data.
+**Objective**: Establish the end-to-end path from text input to furigana-rendered reading view, including the annotation string parser, ruby HTML rendering, and all input/output edge case handling. No persistence in this milestone — the generated result lives only in route action data.
 
 **Weight**: 0.23
 
@@ -114,7 +114,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 2: Sanity Storage and History Sidebar
+### Milestone 2: Sanity Storage and History Sidebar
 
 **Objective**: Persist every generated entry to Sanity and populate the history sidebar with the persisted list. Establish the full Sanity schema, GROQ queries, and the sidebar component architecture.
 
@@ -141,7 +141,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 - `clientLoader` in `home.tsx` fetches sidebar list with GROQ: `*[_type == "entry" && !defined(deletedAt)] | order(createdAt desc)` — returns `_id`, `title`, `createdAt` (not full annotation string, to keep sidebar payload small)
 - `action` writes the new entry to Sanity immediately after AI generation, before returning the annotation string to the client; the client receives both `annotationString` and `entryId` in the action response
 - Active entry ID stored in React state; clicking a sidebar row fetches that entry's full data (`annotationString`) via a `useFetcher` call to a dedicated loader (e.g., `GET /api/entries/:id`) and renders `ReadingView`
-- Sidebar row shows first 30 characters of `rawText` as title placeholder (since AI title generation comes in Phase 4); this is the permanent fallback until title is generated
+- Sidebar row shows first 30 characters of `rawText` as title placeholder (since AI title generation comes in Milestone 4); this is the permanent fallback until title is generated
 - "New" button resets active entry ID to `null` and shows `InputArea`
 
 **Test Strategy**:
@@ -168,9 +168,9 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 3: View Mode Toggle and Preference Persistence
+### Milestone 3: View Mode Toggle and Preference Persistence
 
-**Objective**: Implement the "Always" / "On Hover" display mode toggle with correct desktop hover behavior. Mobile tap behavior is deferred to Phase 8.
+**Objective**: Implement the "Always" / "On Hover" display mode toggle with correct desktop hover behavior. Mobile tap behavior is deferred to Milestone 8.
 
 **Weight**: 0.08
 
@@ -183,7 +183,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 **Architectural Focus**:
 - View mode is a CSS concern, not a React re-render concern: toggling mode updates a `data-view-mode` attribute on the reading container; `<rt>` visibility is controlled entirely by CSS selectors
 - `@media (pointer: fine)` gates the `:hover` CSS rule so it never fires on touch devices
-- Mobile tap delegation deferred to Phase 8
+- Mobile tap delegation deferred to Milestone 8
 - `localStorage` read in `clientLoader` (not `useEffect`) per the project's `useEffect` rule; write via a dedicated `clientAction` or inline in the toggle's `onChange` handler using `localStorage.setItem` directly (synchronous, safe on client)
 - Toggle state initialized from `clientLoader` data to avoid hydration mismatch
 
@@ -225,7 +225,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 4: AI Title Generation
+### Milestone 4: AI Title Generation
 
 **Objective**: Add background AI title generation using `useFetcher`, with a live placeholder in the sidebar row that transitions to the AI title on resolution.
 
@@ -247,7 +247,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 - `api.title.ts` action: extract `text` from form data, call `openai.chat.completions.create` with a short prompt asking for a 3–6 word English title, PATCH the Sanity entry with `{ title }`, return JSON response
 - Add route to `app/routes.ts`: `route("api/title", "routes/api.title.ts")`
 - In `home.tsx` component: after `actionData` arrives with `entryId`, fire `titleFetcher.submit` once; update local sidebar list state when `titleFetcher.data` resolves
-- Sanity entry's `title` field: `null` on create (Phase 2), populated by this phase's PATCH; sidebar query already returns `title` — null check in `SidebarEntry` selects placeholder vs. title display
+- Sanity entry's `title` field: `null` on create (Milestone 2), populated by this milestone's PATCH; sidebar query already returns `title` — null check in `SidebarEntry` selects placeholder vs. title display
 
 **Test Strategy**:
 - Unit Testing: title prompt in `app/lib/ai/prompts.ts` — snapshot test.
@@ -270,9 +270,9 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 5: Soft-Delete and Trash Menu
+### Milestone 5: Soft-Delete and Trash Menu
 
-**Objective**: Implement hover-triggered trash icon on desktop. Mobile trash icon visibility is deferred to Phase 8.
+**Objective**: Implement hover-triggered trash icon on desktop. Mobile trash icon visibility is deferred to Milestone 8.
 
 **Weight**: 0.16
 
@@ -288,7 +288,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 **Architectural Focus**:
 - All delete/restore/destroy operations are `POST` actions on dedicated resource routes — no client-side `fetch` calls; `useFetcher` from each `SidebarEntry` dispatches the appropriate action
 - Soft-delete: `action` sets `deletedAt: new Date().toISOString()` via Sanity PATCH; sidebar `clientLoader` GROQ query already filters `deletedAt == null` — the row disappears from sidebar immediately via optimistic `useFetcher` state
-- Mobile trash icon visibility deferred to Phase 8
+- Mobile trash icon visibility deferred to Milestone 8
 - Trash Menu fetches `*[_type == "entry" && defined(deletedAt)] | order(deletedAt desc)` from Sanity when the `Sheet` opens (via `useFetcher` triggered by `onOpenChange`)
 - Toast notification: use shadcn/ui `Sonner` (or `useToast` from existing shadcn/ui) — "Entry deleted" shown on soft-delete; component added to root layout
 - "Deleting currently viewed entry" edge case: when `entryId === activeEntryId`, `action` response includes a flag; component switches to next entry or empty state
@@ -326,7 +326,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 6: Inline Title Editing (Desktop Only)
+### Milestone 6: Inline Title Editing (Desktop Only)
 
 **Objective**: Implement double-click inline title editing on sidebar rows for desktop, with Enter/Escape/blur semantics and Sanity PATCH persistence.
 
@@ -374,7 +374,7 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 7: Relative Timestamps and Session Persistence
+### Milestone 7: Relative Timestamps and Session Persistence
 
 **Objective**: Complete the two remaining lower-complexity features — relative timestamps with live updates and session persistence — which can be implemented in parallel.
 
@@ -420,9 +420,9 @@ The phasing strategy follows the review's recommended implementation sequence cl
 
 ---
 
-### Phase 8: Mobile Support
+### Milestone 8: Mobile Support
 
-**Objective**: Implement all mobile-specific behaviors deferred from Phases 3, 5, 6, and 7. This phase consolidates mobile functionality into a single cohesive phase to ensure focus and clarity.
+**Objective**: Implement all mobile-specific behaviors deferred from Milestones 3, 5, 6, and 7. This milestone consolidates mobile functionality into a single cohesive milestone to ensure focus and clarity.
 
 **Weight**: 0.07
 
@@ -484,65 +484,65 @@ The phasing strategy follows the review's recommended implementation sequence cl
 - Mobile trash icon is always visible; desktop trash icon appears on row hover
 - Mobile sidebar drawer opens/closes correctly; tap-outside dismisses
 - Mobile inline editing is not available (no edit affordance)
-- Desktop behavior is unchanged from Phases 3–7
+- Desktop behavior is unchanged from Milestones 3–7
 - `pnpm type-check` passes with zero errors
 
 ---
 
 ## Dependency and Conflict Analysis
 
-**Phase Dependencies**:
+**Milestone Dependencies**:
 
-- Phase 1 → Phase 2: Phase 2 requires the annotation string returned by Phase 1's `action`. Sanity schema and storage are layered on top of the existing action; `entryId` is added to the action response.
-- Phase 1 → Phase 3: Phase 3 requires `ReadingView` from Phase 1 to exist and accept a `viewMode` prop. Can begin as soon as Phase 1 `ReadingView` is stable.
-- Phase 2 → Phase 4: Phase 4 requires `entryId` in the action response (Phase 2) and a Sanity PATCH endpoint. Cannot start until Phase 2 is complete.
-- Phase 2 → Phase 5: Phase 5 requires the Sanity `entry` document to exist with a `deletedAt` field. The schema can be defined in Phase 2 with `deletedAt` already included, allowing Phase 5 to begin without a schema migration.
-- Phase 2 → Phase 6: Phase 6 requires sidebar entries and a PATCH action pattern established in Phase 4. Depends on both Phase 2 and Phase 4.
-- Phase 2 → Phase 7: Session persistence (7b) requires Sanity entry fetching established in Phase 2. Timestamp utility (7a) can be written and unit-tested in parallel.
-- Phase 1 → Phase 7a: Timestamp display requires sidebar entries (Phase 2), but the `formatTimestamp` utility and hook can be written and unit-tested during Phase 1 or in parallel.
-- Phase 7 → Phase 8: Phase 8 requires all feature phases (1–7) to be complete; mobile behavior is additive on top of the full desktop feature set.
+- Milestone 1 → Milestone 2: Milestone 2 requires the annotation string returned by Milestone 1's `action`. Sanity schema and storage are layered on top of the existing action; `entryId` is added to the action response.
+- Milestone 1 → Milestone 3: Milestone 3 requires `ReadingView` from Milestone 1 to exist and accept a `viewMode` prop. Can begin as soon as Milestone 1 `ReadingView` is stable.
+- Milestone 2 → Milestone 4: Milestone 4 requires `entryId` in the action response (Milestone 2) and a Sanity PATCH endpoint. Cannot start until Milestone 2 is complete.
+- Milestone 2 → Milestone 5: Milestone 5 requires the Sanity `entry` document to exist with a `deletedAt` field. The schema can be defined in Milestone 2 with `deletedAt` already included, allowing Milestone 5 to begin without a schema migration.
+- Milestone 2 → Milestone 6: Milestone 6 requires sidebar entries and a PATCH action pattern established in Milestone 4. Depends on both Milestone 2 and Milestone 4.
+- Milestone 2 → Milestone 7: Session persistence (7b) requires Sanity entry fetching established in Milestone 2. Timestamp utility (7a) can be written and unit-tested in parallel.
+- Milestone 1 → Milestone 7a: Timestamp display requires sidebar entries (Milestone 2), but the `formatTimestamp` utility and hook can be written and unit-tested during Milestone 1 or in parallel.
+- Milestone 7 → Milestone 8: Milestone 8 requires all feature milestones (1–7) to be complete; mobile behavior is additive on top of the full desktop feature set.
 
 **Sequential Critical Path**:
 ```
-Phase 1 → Phase 2 → Phase 4 → Phase 6
+Milestone 1 → Milestone 2 → Milestone 4 → Milestone 6
                  ↓
-              Phase 5
+              Milestone 5
                  ↓
-              Phase 7a, 7b (can run in parallel after Phase 2)
-Phase 3 (can run in parallel after Phase 1)
-Phase 8 (after Phase 7 complete)
+              Milestone 7a, 7b (can run in parallel after Milestone 2)
+Milestone 3 (can run in parallel after Milestone 1)
+Milestone 8 (after Milestone 7 complete)
 ```
 
 **Parallel Work Opportunities**:
-- Phase 3 (view mode toggle) can begin immediately after Phase 1 ships `ReadingView`, in parallel with Phase 2
-- Phase 7a (`formatTimestamp` utility) can be written and tested during any phase
-- Phases 7a and 7b can all run in parallel with each other once Phase 2 is complete
-- Phase 5 and Phase 6 are independent of each other and can run in parallel after Phase 2 (and Phase 4 for Phase 6)
-- Phase 8 must follow Phase 7; all mobile consolidation happens in this phase
+- Milestone 3 (view mode toggle) can begin immediately after Milestone 1 ships `ReadingView`, in parallel with Milestone 2
+- Milestone 7a (`formatTimestamp` utility) can be written and tested during any milestone
+- Milestones 7a and 7b can all run in parallel with each other once Milestone 2 is complete
+- Milestone 5 and Milestone 6 are independent of each other and can run in parallel after Milestone 2 (and Milestone 4 for Milestone 6)
+- Milestone 8 must follow Milestone 7; all mobile consolidation happens in this milestone
 
 **Critical Bottlenecks**:
 
-- **Phase 2 is the central dependency hub.** Sanity schema must include `deletedAt` from the start to avoid a schema migration when Phase 5 is implemented. Define `title` as nullable (`string | null`) from the start as well, to avoid a Phase 4 migration.
-- **GPT-4o-mini prompt quality gates Phases 1 and 4.** If the system prompt for furigana generation is not stable by end of Phase 1, Phase 4's title prompt will compound the instability. Allocate time for prompt iteration in Phase 1.
+- **Milestone 2 is the central dependency hub.** Sanity schema must include `deletedAt` from the start to avoid a schema migration when Milestone 5 is implemented. Define `title` as nullable (`string | null`) from the start as well, to avoid a Milestone 4 migration.
+- **GPT-4o-mini prompt quality gates Milestones 1 and 4.** If the system prompt for furigana generation is not stable by end of Milestone 1, Milestone 4's title prompt will compound the instability. Allocate time for prompt iteration in Milestone 1.
 - **Sanity free tier limits.** The integration test strategy requires a Sanity test dataset. The free tier allows up to 10,000 documents across all datasets in a project — use a dedicated `test` dataset for integration tests, cleaned up after each test run, to avoid polluting the main dataset and consuming the document quota.
-- **TypeScript strict mode throughout.** `exactOptionalPropertyTypes` means optional Sanity response fields require explicit `| undefined` in Zod schemas. Validate Zod schemas for all GROQ responses in Phase 2 before dependent phases build on them.
+- **TypeScript strict mode throughout.** `exactOptionalPropertyTypes` means optional Sanity response fields require explicit `| undefined` in Zod schemas. Validate Zod schemas for all GROQ responses in Milestone 2 before dependent milestones build on them.
 
 **External Dependencies**:
-- **OpenAI API**: GPT-4o-mini is the only AI dependency. Pay-as-you-go billing must be enabled before Phase 1 integration tests can run against the live API. Rate limits (tokens per minute) are unlikely to be hit at development volume.
+- **OpenAI API**: GPT-4o-mini is the only AI dependency. Pay-as-you-go billing must be enabled before Milestone 1 integration tests can run against the live API. Rate limits (tokens per minute) are unlikely to be hit at development volume.
 - **Sanity**: Free project creation requires a Sanity account. The free tier's 10,000-document limit is ample for personal-use MVP development. Sanity API availability is outside the developer's control; integration tests should use mocks for CI reliability and only hit the live Sanity API in a dedicated integration test suite.
-- **shadcn/ui components**: `Sheet`, `Toast`/`Sonner`, and `ToggleGroup` may not yet be installed. Each is added with `pnpx shadcn@latest add <component> --defaults` as needed per phase.
-- **Vitest and Playwright**: Not yet in `package.json`. Both must be added as dev dependencies before Phase 1 testing begins.
+- **shadcn/ui components**: `Sheet`, `Toast`/`Sonner`, and `ToggleGroup` may not yet be installed. Each is added with `pnpx shadcn@latest add <component> --defaults` as needed per milestone.
+- **Vitest and Playwright**: Not yet in `package.json`. Both must be added as dev dependencies before Milestone 1 testing begins.
 
 ---
 
 ## Implementation Notes
 
 **Key Architectural Decisions Made in This Roadmap**:
-- Mobile tap behavior: Option B (event delegation with `.active` class toggle) — implemented in Phase 8 to deliver the full "On Hover" self-test experience on mobile without per-element event listeners.
-- Sidebar rendering: Option A (single component, CSS-controlled visibility) — SSR-compatible, simpler state model. Mobile drawer integration deferred to Phase 8.
+- Mobile tap behavior: Option B (event delegation with `.active` class toggle) — implemented in Milestone 8 to deliver the full "On Hover" self-test experience on mobile without per-element event listeners.
+- Sidebar rendering: Option A (single component, CSS-controlled visibility) — SSR-compatible, simpler state model. Mobile drawer integration deferred to Milestone 8.
 - Sanity read strategy: Option B (`clientLoader` for sidebar list) — **preferred**. Sidebar renders a skeleton UI during the loading state to prevent flash of empty content; `lastViewedEntryId` resolves in the same round trip.
 
-**Sanity Schema — Define Completely in Phase 2**:
+**Sanity Schema — Define Completely in Milestone 2**:
 The `entry` document schema must include all fields from day one to avoid migrations:
 ```
 {
@@ -557,7 +557,7 @@ The `entry` document schema must include all fields from day one to avoid migrat
 ```
 
 **XSS Prevention**:
-The annotation string parser in Phase 1 is the only point where external data (AI output) is transformed into HTML. The parser must produce only `<ruby>`, `<rt>`, `<rp>`, and text nodes — never raw HTML passthrough. React's JSX rendering (not `dangerouslySetInnerHTML`) is the safe rendering path.
+The annotation string parser in Milestone 1 is the only point where external data (AI output) is transformed into HTML. The parser must produce only `<ruby>`, `<rt>`, `<rp>`, and text nodes — never raw HTML passthrough. React's JSX rendering (not `dangerouslySetInnerHTML`) is the safe rendering path.
 
 **Known Risks and Mitigations**:
 - AI format non-compliance (missing braces, extra prose): server-side validation in the `action` before Sanity write; retry with stricter prompt on format failure; surface error to user if retry also fails.
@@ -566,7 +566,7 @@ The annotation string parser in Phase 1 is the only point where external data (A
 - Japanese font rendering gap: add `Noto Sans JP` as a web font import for Japanese text specifically; the existing Geist Variable font covers Latin but not CJK glyphs.
 
 **Assumptions**:
-- A single engineer implements all phases sequentially; parallel phase opportunities are noted for future team growth.
+- A single engineer implements all milestones sequentially; parallel milestone opportunities are noted for future team growth.
 - Sanity free tier document and API request limits are not a constraint at MVP development and personal-use production volume.
 - No CI/CD pipeline is in place yet; Vitest unit tests and Playwright end-to-end tests are run locally until a pipeline is configured.
 - Trash retention: no auto-purge in MVP — entries remain in Trash until "Empty Trash" is explicitly triggered.
