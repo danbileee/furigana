@@ -197,4 +197,58 @@ describe("parseAnnotationString", () => {
       ]);
     });
   });
+
+  describe("splitTrailingKanji integration", () => {
+    it("treats hiragana-only text before annotation as a ruby kanji field", () => {
+      expect(parseAnnotationString("あいう{おん}")).toEqual([
+        { type: "ruby", kanji: "あいう", yomi: "おん" },
+      ]);
+    });
+
+    it("splits mixed text around the final trailing kanji before annotation", () => {
+      expect(parseAnnotationString("東京は大{おお}きい")).toEqual([
+        { type: "text", value: "東京は" },
+        { type: "ruby", kanji: "大", yomi: "おお" },
+        { type: "text", value: "きい" },
+      ]);
+    });
+
+    it("treats the iteration mark 々 as part of a kanji compound", () => {
+      expect(parseAnnotationString("時々{ときどき}")).toEqual([
+        { type: "ruby", kanji: "時々", yomi: "ときどき" },
+      ]);
+    });
+
+    it("treats ヶ as part of a kanji compound", () => {
+      expect(parseAnnotationString("三ヶ月{さんかげつ}")).toEqual([
+        { type: "ruby", kanji: "三ヶ月", yomi: "さんかげつ" },
+      ]);
+    });
+  });
+
+  describe("performance and encoding", () => {
+    it("parses a 10,000-character pure text input as one text token", () => {
+      const input = "あ".repeat(10_000);
+
+      expect(parseAnnotationString(input)).toEqual([{ type: "text", value: input }]);
+    });
+
+    it("handles 1,000 consecutive ruby tokens without drift", () => {
+      const input = "漢字{かんじ}".repeat(1_000);
+      const result = parseAnnotationString(input);
+
+      expect(result).toHaveLength(1_000);
+      expect(
+        result.every((token) => {
+          return token.type === "ruby" && token.kanji === "漢字" && token.yomi === "かんじ";
+        }),
+      ).toBe(true);
+    });
+
+    it("handles supplementary-plane han characters correctly", () => {
+      expect(parseAnnotationString("𠀋{じょう}")).toEqual([
+        { type: "ruby", kanji: "𠀋", yomi: "じょう" },
+      ]);
+    });
+  });
 });
