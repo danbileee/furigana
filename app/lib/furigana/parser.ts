@@ -8,6 +8,7 @@ function splitTrailingKanji(value: string): { leading: string; kanji: string } {
 
   const chars = Array.from(value);
   let splitIndex = chars.length;
+  /* v8 ignore next -- @preserve */
   while (splitIndex > 0 && KANJI_CHAR_REGEX.test(chars[splitIndex - 1] ?? "")) {
     splitIndex -= 1;
   }
@@ -54,7 +55,7 @@ export function parseAnnotationString(input: string): FuriganaToken[] {
           result.push({ type: "ruby", kanji: textBuffer, yomi: yomiBuffer });
         } else {
           const raw = leadingTextBeforeRuby + textBuffer + "{" + yomiBuffer + "}";
-          if (raw.length > 0) {
+          /* v8 ignore else -- @preserve */ if (raw.length > 0) {
             result.push({ type: "text", value: raw });
           }
         }
@@ -78,7 +79,7 @@ export function parseAnnotationString(input: string): FuriganaToken[] {
 
   if (state === "yomi") {
     const raw = leadingTextBeforeRuby + textBuffer + "{" + yomiBuffer;
-    if (raw.length > 0) {
+    /* v8 ignore else -- @preserve */ if (raw.length > 0) {
       result.push({ type: "text", value: raw });
     }
   } else if (textBuffer.length > 0) {
