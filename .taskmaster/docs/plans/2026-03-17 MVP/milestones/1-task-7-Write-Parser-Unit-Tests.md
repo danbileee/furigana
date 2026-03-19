@@ -68,47 +68,47 @@ This is the critical behavioral difference: instead of the entire `textBuffer` b
 
 ### What the Existing 23 Tests Cover
 
-| Test# | Behavior Tested | PRD Edge Case | Parser Path |
-|-------|----------------|---------------|-------------|
-| 1 | Empty string → `[]` | Implicit | Early return at line 22 |
-| 2 | Pure hiragana → single TextToken | E5 | End-of-input flush, `textBuffer` non-empty |
-| 3 | Pure romaji → single TextToken | E5 | End-of-input flush, `textBuffer` non-empty |
-| 4 | Single kanji compound, no surrounding text | F5 table row 1 | Single `{` → `}` cycle |
-| 5 | Single kanji character | F5 table row 2 | Single-char kanji |
-| 6 | Ruby followed by trailing text | F5 table row 2 | `}` then end-of-input flush |
-| 7 | Leading text + ruby | Implicit | `splitTrailingKanji` splits non-kanji prefix |
-| 8 | Adjacent ruby tokens | F5 table row 7 | Two `{...}` cycles, no text between |
-| 9 | PRD primary example (two ruby + interleaved text) | F5 table row 3 | Multiple cycles |
-| 10 | Two ruby tokens + trailing punctuation | F5 table row 11 | Punctuation in end-of-input flush |
-| 11 | Unclosed `{` | E6 / F5 table row 8 | End-of-input flush in `yomi` state |
-| 12 | Empty yomi `"text{}"` | E6 / F5 table row 10 | `}` with empty yomiBuffer → TextToken |
-| 13 | Empty kanji `"{reading}"` | E6 / F5 table row 10 variant | `{` with empty textBuffer → fallback |
-| 14 | Nested braces | E6 / F5 table row 9 | `{` in `yomi` state → literal char |
-| 15 | Stray `}` in plain text | E6 | `}` in `text` state → textBuffer |
-| 16 | Only `"{}"` | E6 | Empty kanji + empty yomi → TextToken |
-| 17 | Only `"{"` | E6 | Minimal unclosed brace |
-| 18 | TextToken shape (no extra keys) | F5 safety | `Object.keys` assertion |
-| 19 | RubyToken shape (no extra keys, `yomi` field) | F5 safety | `Object.keys` assertion |
-| 20 | No character loss invariant | F5 safety | Reconstruction check |
-| 21 | News article excerpt (6 ruby tokens) | F5 table rows 3/11 | Long sequence |
-| 22 | Classic literature excerpt (4 ruby tokens) | F5 | Two-sentence paragraph |
-| 23 | Long compound sentence (9 ruby tokens) | F5 | High-density kanji |
+| Test# | Behavior Tested                                   | PRD Edge Case                | Parser Path                                  |
+| ----- | ------------------------------------------------- | ---------------------------- | -------------------------------------------- |
+| 1     | Empty string → `[]`                               | Implicit                     | Early return at line 22                      |
+| 2     | Pure hiragana → single TextToken                  | E5                           | End-of-input flush, `textBuffer` non-empty   |
+| 3     | Pure romaji → single TextToken                    | E5                           | End-of-input flush, `textBuffer` non-empty   |
+| 4     | Single kanji compound, no surrounding text        | F5 table row 1               | Single `{` → `}` cycle                       |
+| 5     | Single kanji character                            | F5 table row 2               | Single-char kanji                            |
+| 6     | Ruby followed by trailing text                    | F5 table row 2               | `}` then end-of-input flush                  |
+| 7     | Leading text + ruby                               | Implicit                     | `splitTrailingKanji` splits non-kanji prefix |
+| 8     | Adjacent ruby tokens                              | F5 table row 7               | Two `{...}` cycles, no text between          |
+| 9     | PRD primary example (two ruby + interleaved text) | F5 table row 3               | Multiple cycles                              |
+| 10    | Two ruby tokens + trailing punctuation            | F5 table row 11              | Punctuation in end-of-input flush            |
+| 11    | Unclosed `{`                                      | E6 / F5 table row 8          | End-of-input flush in `yomi` state           |
+| 12    | Empty yomi `"text{}"`                             | E6 / F5 table row 10         | `}` with empty yomiBuffer → TextToken        |
+| 13    | Empty kanji `"{reading}"`                         | E6 / F5 table row 10 variant | `{` with empty textBuffer → fallback         |
+| 14    | Nested braces                                     | E6 / F5 table row 9          | `{` in `yomi` state → literal char           |
+| 15    | Stray `}` in plain text                           | E6                           | `}` in `text` state → textBuffer             |
+| 16    | Only `"{}"`                                       | E6                           | Empty kanji + empty yomi → TextToken         |
+| 17    | Only `"{"`                                        | E6                           | Minimal unclosed brace                       |
+| 18    | TextToken shape (no extra keys)                   | F5 safety                    | `Object.keys` assertion                      |
+| 19    | RubyToken shape (no extra keys, `yomi` field)     | F5 safety                    | `Object.keys` assertion                      |
+| 20    | No character loss invariant                       | F5 safety                    | Reconstruction check                         |
+| 21    | News article excerpt (6 ruby tokens)              | F5 table rows 3/11           | Long sequence                                |
+| 22    | Classic literature excerpt (4 ruby tokens)        | F5                           | Two-sentence paragraph                       |
+| 23    | Long compound sentence (9 ruby tokens)            | F5                           | High-density kanji                           |
 
 ### PRD Edge Cases: Coverage Status
 
-| PRD Case | Coverage Status | Notes |
-|----------|----------------|-------|
-| `"日本語{にほんご}"` | Covered (Test 4) | |
-| `"行{い}きました"` | Covered (Test 6) | |
-| `"東京{とうきょう}に行{い}きました"` | Covered (Test 9) | |
-| Pure hiragana | Covered (Test 2) | |
-| Pure romaji | Covered (Test 3) | |
-| Empty string | Covered (Test 1) | |
-| Consecutive ruby | Covered (Test 8) | |
-| Unclosed `{` | Covered (Test 11) | |
-| Nested braces | Covered (Test 14) | |
-| Empty reading `"text{}"` | Covered (Test 12) | PRD says "document chosen behavior" — behavior is TextToken fallback |
-| Mixed with punctuation | Covered (Test 10) | |
+| PRD Case                             | Coverage Status   | Notes                                                                |
+| ------------------------------------ | ----------------- | -------------------------------------------------------------------- |
+| `"日本語{にほんご}"`                 | Covered (Test 4)  |                                                                      |
+| `"行{い}きました"`                   | Covered (Test 6)  |                                                                      |
+| `"東京{とうきょう}に行{い}きました"` | Covered (Test 9)  |                                                                      |
+| Pure hiragana                        | Covered (Test 2)  |                                                                      |
+| Pure romaji                          | Covered (Test 3)  |                                                                      |
+| Empty string                         | Covered (Test 1)  |                                                                      |
+| Consecutive ruby                     | Covered (Test 8)  |                                                                      |
+| Unclosed `{`                         | Covered (Test 11) |                                                                      |
+| Nested braces                        | Covered (Test 14) |                                                                      |
+| Empty reading `"text{}"`             | Covered (Test 12) | PRD says "document chosen behavior" — behavior is TextToken fallback |
+| Mixed with punctuation               | Covered (Test 10) |                                                                      |
 
 All 11 PRD edge cases are covered by the existing 23 tests.
 
@@ -119,6 +119,7 @@ The actual parser implementation uses a `splitTrailingKanji` helper that was not
 #### Gap A: `splitTrailingKanji` called with empty string (line 7)
 
 The early return `if (value.length === 0) return { leading: "", kanji: "" }` is reached only when `textBuffer` is empty at the moment `{` is encountered. This happens when:
+
 - Input starts with `{` (e.g., `"{reading}"` — covered by Test 13)
 - Two adjacent `{...}` groups: after the first `}` clears `textBuffer`, the second `{` triggers `splitTrailingKanji("")`
 
@@ -244,13 +245,15 @@ Located at `app/lib/ai/sanitize.ts`. The function is pure, synchronous, and has 
 
 ```typescript
 export function sanitize(input: string): string {
-  return input
-    // Remove HTML tags (opening and closing, with optional whitespace around tag name)
-    .replace(/\s*<\/? *[A-Za-z][^>]*>/g, "")
-    // Remove javascript: protocol (case-insensitive)
-    .replace(/javascript:/gi, "")
-    // Remove event handler patterns (on* = patterns)
-    .replace(/on\w+=/gi, "");
+  return (
+    input
+      // Remove HTML tags (opening and closing, with optional whitespace around tag name)
+      .replace(/\s*<\/? *[A-Za-z][^>]*>/g, "")
+      // Remove javascript: protocol (case-insensitive)
+      .replace(/javascript:/gi, "")
+      // Remove event handler patterns (on* = patterns)
+      .replace(/on\w+=/gi, "")
+  );
 }
 ```
 
@@ -707,44 +710,44 @@ export function sanitize(input: string): string {
 
 ### Phase 1: Baseline Analysis
 
-- [ ] Run `pnpm exec vitest run --coverage app/lib/furigana/parser.test.ts` and confirm 91.17% branch coverage with uncovered lines 11, 57, 81
-- [ ] Confirm lines 57 and 81 contain `if (raw.length > 0)` guards
-- [ ] Confirm line 11 contains the `?? ""` fallback in the while condition
-- [ ] Verify all three branches are structurally unreachable (manual analysis confirms)
+- [x] Run `pnpm exec vitest run --coverage app/lib/furigana/parser.test.ts` and confirm 91.17% branch coverage with uncovered lines 11, 57, 81
+- [x] Confirm lines 57 and 81 contain `if (raw.length > 0)` guards
+- [x] Confirm line 11 contains the `?? ""` fallback in the while condition
+- [x] Verify all three branches are structurally unreachable (manual analysis confirms)
 
 ### Phase 2: Parser Annotations
 
-- [ ] Add `/* v8 ignore next */` comment above the while loop at line 11 in `parser.ts`
-- [ ] Add `/* v8 ignore else */` on the `if (raw.length > 0)` line at line 57 in `parser.ts`
-- [ ] Add `/* v8 ignore else */` on the `if (raw.length > 0)` line at line 81 in `parser.ts`
-- [ ] Run `pnpm type-check` — zero errors after annotation
-- [ ] Run `pnpm exec eslint app/lib/furigana/parser.ts` — zero errors after annotation
+- [x] Add `/* v8 ignore next */` comment above the while loop at line 11 in `parser.ts`
+- [x] Add `/* v8 ignore else */` on the `if (raw.length > 0)` line at line 57 in `parser.ts`
+- [x] Add `/* v8 ignore else */` on the `if (raw.length > 0)` line at line 81 in `parser.ts`
+- [x] Run `pnpm type-check` — zero errors after annotation
+- [x] Run `pnpm exec eslint app/lib/furigana/parser.ts` — zero errors after annotation
 
 ### Phase 2.5: Sanitization Module
 
-- [ ] Create `app/lib/ai/sanitize.ts` with the `sanitize` function
-- [ ] Confirm no imports are needed in `sanitize.ts` (pure native JS)
-- [ ] Run `pnpm type-check` — zero errors on new file
-- [ ] Create `app/lib/ai/sanitize.test.ts` with Tests 31–42 plus Test S12 (12 tests total)
-- [ ] Run `pnpm exec vitest run app/lib/ai/sanitize.test.ts` — 12 tests passing
-- [ ] Run `pnpm exec vitest run --coverage app/lib/ai/sanitize.test.ts` — 100% coverage on `sanitize.ts`
-- [ ] Run `pnpm exec eslint app/lib/ai/` — zero errors
+- [x] Create `app/lib/ai/sanitize.ts` with the `sanitize` function
+- [x] Confirm no imports are needed in `sanitize.ts` (pure native JS)
+- [x] Run `pnpm type-check` — zero errors on new file
+- [x] Create `app/lib/ai/sanitize.test.ts` with Tests 31–42 plus Test S12 (12 tests total)
+- [x] Run `pnpm exec vitest run app/lib/ai/sanitize.test.ts` — 12 tests passing
+- [x] Run `pnpm exec vitest run --coverage app/lib/ai/sanitize.test.ts` — 100% coverage on `sanitize.ts`
+- [x] Run `pnpm exec eslint app/lib/ai/` — zero errors
 
 ### Phase 3: New Test Cases in `parser.test.ts`
 
-- [ ] Add `describe("splitTrailingKanji integration")` block with Tests 24–27
-- [ ] Add `describe("performance and encoding")` block with Tests 28–30
-- [ ] Confirm all new `RubyToken` assertions use `yomi` (not `reading`)
-- [ ] Run `pnpm exec vitest run app/lib/furigana/parser.test.ts` — 30 tests passing
-- [ ] Run `pnpm type-check` — zero errors after adding test cases
+- [x] Add `describe("splitTrailingKanji integration")` block with Tests 24–27
+- [x] Add `describe("performance and encoding")` block with Tests 28–30
+- [x] Confirm all new `RubyToken` assertions use `yomi` (not `reading`)
+- [x] Run `pnpm exec vitest run app/lib/furigana/parser.test.ts` — 30 tests passing
+- [x] Run `pnpm type-check` — zero errors after adding test cases
 
 ### Phase 4: Full Verification
 
-- [ ] Run `pnpm exec vitest run --coverage app/lib/furigana/parser.test.ts` — `parser.ts` shows `100% Stmts | 100% Branch | 100% Funcs | 100% Lines`
-- [ ] Run `pnpm exec vitest run --coverage app/lib/ai/sanitize.test.ts` — `sanitize.ts` shows `100% Stmts | 100% Branch | 100% Funcs | 100% Lines`
-- [ ] Run `pnpm exec eslint app/lib/furigana/ app/lib/ai/` — zero errors
-- [ ] All 30 parser tests listed as passing in the test runner output
-- [ ] All 12 sanitize tests listed as passing in the test runner output
+- [x] Run `pnpm exec vitest run --coverage app/lib/furigana/parser.test.ts` — `parser.ts` shows `100% Stmts | 100% Branch | 100% Funcs | 100% Lines`
+- [x] Run `pnpm exec vitest run --coverage app/lib/ai/sanitize.test.ts` — `sanitize.ts` shows `100% Stmts | 100% Branch | 100% Funcs | 100% Lines`
+- [x] Run `pnpm exec eslint app/lib/furigana/ app/lib/ai/` — zero errors
+- [x] All 30 parser tests listed as passing in the test runner output
+- [x] All 12 sanitize tests listed as passing in the test runner output
 
 ---
 
