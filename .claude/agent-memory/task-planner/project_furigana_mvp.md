@@ -11,6 +11,7 @@ Furigana is a single-page React Router v7 (SSR) web app that adds AI-generated f
 **How to apply:** Every plan must respect the 8-milestone ordering. Milestone 1 is the core generation loop (foundational). All downstream milestones add features on top without modifying Milestone 1 contracts.
 
 ## Milestone Structure (summary)
+
 - M1: Core Generation Loop — textarea input → GPT-4o-mini server action → FuriganaToken[] → <ruby> rendering
 - M2: Persistence (Sanity CMS) + History Sidebar + "New" button
 - M3: View mode toggle (Always / On Hover)
@@ -21,6 +22,7 @@ Furigana is a single-page React Router v7 (SSR) web app that adds AI-generated f
 - M8: Mobile sidebar drawer
 
 ## Critical M1 Contracts (must not be broken by later milestones)
+
 - `FuriganaToken[]` is the canonical parsed type; Sanity stores `annotationString` and re-parses on load
 - `ActionSuccess` returns `{ tokens: FuriganaToken[] }` — M2 extends this with `{ entryId: string }`
 - `ReadingView` receives `tokens: FuriganaToken[]` — M3 adds `viewMode` as a second prop
@@ -28,7 +30,8 @@ Furigana is a single-page React Router v7 (SSR) web app that adds AI-generated f
 - Ruby CSS lives in `@layer base` in `app/app.css` — M3 adds `[data-view-mode]` rules to the same file
 
 ## Key Architectural Decisions
+
 - Server/client boundary: `app/lib/ai/` is server-only; parsed token array is the only data crossing the boundary
 - No `dangerouslySetInnerHTML` anywhere — XSS safety enforced via typed JSX interpolation
-- `OPENAI_API_KEY` is server-only (no VITE_ prefix); the module throws at import time if unset
+- `OPENAI_API_KEY` is server-only (no VITE\_ prefix); the module throws at import time if unset
 - Parser (`parseAnnotationString`) runs on the server inside the action; client only receives typed tokens

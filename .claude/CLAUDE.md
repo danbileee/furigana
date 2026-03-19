@@ -94,5 +94,6 @@ VITE_SENTRY_DSN=
 - **Pre-commit hooks**: `lint-staged` runs ESLint and Prettier on staged files via Husky.
 
 ## Task Master AI Instructions
+
 **Import Task Master's development workflow commands and guidelines, treat as if import is in the main CLAUDE.md file.**
 @./.taskmaster/CLAUDE.md

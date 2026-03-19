@@ -72,9 +72,7 @@ import * as z from "zod";
  */
 export const TextTokenSchema = z.object({
   type: z.literal("text").readonly(),
-  value: z
-    .string()
-    .regex(/^(?:[^{}])*$/, "TextToken value must not contain {…} placeholders"),
+  value: z.string().regex(/^(?:[^{}])*$/, "TextToken value must not contain {…} placeholders"),
 });
 
 /**
@@ -90,10 +88,7 @@ export const RubyTokenSchema = z.object({
  * Discriminated union schema for all token types in parsed furigana output.
  * The discriminant is the `type` field.
  */
-export const FuriganaTokenSchema = z.discriminatedUnion("type", [
-  TextTokenSchema,
-  RubyTokenSchema,
-]);
+export const FuriganaTokenSchema = z.discriminatedUnion("type", [TextTokenSchema, RubyTokenSchema]);
 
 /**
  * TypeScript type for a plain text segment, derived from TextTokenSchema.
@@ -208,10 +203,7 @@ export type TextToken = z.infer<typeof TextTokenSchema>;
 ### Pattern 2: Zod Discriminated Union
 
 ```typescript
-export const FuriganaTokenSchema = z.discriminatedUnion("type", [
-  TextTokenSchema,
-  RubyTokenSchema,
-]);
+export const FuriganaTokenSchema = z.discriminatedUnion("type", [TextTokenSchema, RubyTokenSchema]);
 
 export type FuriganaToken = z.infer<typeof FuriganaTokenSchema>;
 // Inferred: TextToken | RubyToken
@@ -262,30 +254,35 @@ Task 6 (Configure Vitest) must be complete before unit tests can be written. The
 #### Test Suite: `TextTokenSchema` — Zod Validation
 
 **Test 1**: Parses a valid `TextToken` object
+
 - **Given**: `{ type: 'text', value: 'こんにちは' }`
 - **When**: `TextTokenSchema.parse(input)` is called
 - **Then**: Returns `{ type: 'text', value: 'こんにちは' }` without throwing
 - **Coverage**: Detects regressions in the schema definition (e.g., accidentally using `z.string()` for `type` instead of `z.literal`)
 
 **Test 2**: Parses an empty `value` string as valid
+
 - **Given**: `{ type: 'text', value: '' }`
 - **When**: `TextTokenSchema.parse(input)` is called
 - **Then**: Returns successfully — empty text segments are valid (e.g., edge case in parser output)
 - **Coverage**: Confirms no inadvertent `.min(1)` constraint on `value`
 
 **Test 3**: Rejects a value containing `{...}` annotation placeholders
+
 - **Given**: `{ type: 'text', value: '日本語{にほんご}' }`
 - **When**: `TextTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }` with a `ZodError` describing the regex failure
 - **Coverage**: This is the primary invariant of the regex rule — detects removal or weakening of the pattern
 
 **Test 4**: Rejects a value with only an opening brace
+
 - **Given**: `{ type: 'text', value: 'text{' }`
 - **When**: `TextTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }` — the regex `^(?:[^{}])*$` rejects any `{` or `}` character
 - **Coverage**: Detects a regex that is too permissive (e.g., only rejects complete `{...}` pairs)
 
 **Test 5**: Rejects an object with a wrong `type` literal
+
 - **Given**: `{ type: 'ruby', value: 'hi' }`
 - **When**: `TextTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }`
@@ -294,18 +291,21 @@ Task 6 (Configure Vitest) must be complete before unit tests can be written. The
 #### Test Suite: `RubyTokenSchema` — Zod Validation
 
 **Test 6**: Parses a valid `RubyToken` object
+
 - **Given**: `{ type: 'ruby', kanji: '東京', reading: 'とうきょう' }`
 - **When**: `RubyTokenSchema.parse(input)` is called
 - **Then**: Returns the object without throwing
 - **Coverage**: Baseline correctness of schema definition
 
 **Test 7**: Rejects a `RubyToken` with an empty `kanji`
+
 - **Given**: `{ type: 'ruby', kanji: '', reading: 'とうきょう' }`
 - **When**: `RubyTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }` — `.min(1)` on `kanji` rejects empty strings
 - **Coverage**: Detects removal of the `.min(1)` guard, which would allow semantically invalid tokens to reach the renderer
 
 **Test 8**: Rejects a `RubyToken` with an empty `reading`
+
 - **Given**: `{ type: 'ruby', kanji: '東京', reading: '' }`
 - **When**: `RubyTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }` — `.min(1)` on `reading` rejects empty strings
@@ -314,24 +314,28 @@ Task 6 (Configure Vitest) must be complete before unit tests can be written. The
 #### Test Suite: `FuriganaTokenSchema` — Discriminated Union Validation
 
 **Test 9**: Parses a `TextToken` shape via the union schema
+
 - **Given**: `{ type: 'text', value: 'きました' }`
 - **When**: `FuriganaTokenSchema.parse(input)` is called
 - **Then**: Returns the object; TypeScript infers it as `FuriganaToken`
 - **Coverage**: Confirms the union schema delegates correctly to `TextTokenSchema`
 
 **Test 10**: Parses a `RubyToken` shape via the union schema
+
 - **Given**: `{ type: 'ruby', kanji: '行', reading: 'い' }`
 - **When**: `FuriganaTokenSchema.parse(input)` is called
 - **Then**: Returns the object; TypeScript infers it as `FuriganaToken`
 - **Coverage**: Confirms the union schema delegates correctly to `RubyTokenSchema`
 
 **Test 11**: Rejects an unknown `type` value
+
 - **Given**: `{ type: 'unknown', value: 'x' }`
 - **When**: `FuriganaTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }` with a `ZodError` indicating no matching discriminant
 - **Coverage**: Confirms discriminated union does not silently pass unknown token shapes (critical for security at the AI output boundary)
 
 **Test 12**: Rejects an object missing the `type` field entirely
+
 - **Given**: `{ value: 'x' }`
 - **When**: `FuriganaTokenSchema.safeParse(input)` is called
 - **Then**: Returns `{ success: false }`
@@ -340,12 +344,14 @@ Task 6 (Configure Vitest) must be complete before unit tests can be written. The
 #### Test Suite: `isTextToken` — Type Guard
 
 **Test 13**: Returns `true` for a `TextToken`
+
 - **Given**: `const token: FuriganaToken = { type: 'text', value: 'こんにちは' }`
 - **When**: `isTextToken(token)` is called
 - **Then**: Returns `true`; TypeScript narrows `token` to `TextToken` inside the `if` block
 - **Coverage**: Detects regression if the guard's predicate is accidentally changed
 
 **Test 14**: Returns `false` for a `RubyToken`
+
 - **Given**: `const token: FuriganaToken = { type: 'ruby', kanji: '漢字', reading: 'かんじ' }`
 - **When**: `isTextToken(token)` is called
 - **Then**: Returns `false`
@@ -354,12 +360,14 @@ Task 6 (Configure Vitest) must be complete before unit tests can be written. The
 #### Test Suite: `isRubyToken` — Type Guard
 
 **Test 15**: Returns `true` for a `RubyToken`
+
 - **Given**: `const token: FuriganaToken = { type: 'ruby', kanji: '東京', reading: 'とうきょう' }`
 - **When**: `isRubyToken(token)` is called
 - **Then**: Returns `true`; TypeScript narrows `token` to `RubyToken` inside the `if` block
 - **Coverage**: Detects regression if the guard predicate is wrong
 
 **Test 16**: Returns `false` for a `TextToken`
+
 - **Given**: `const token: FuriganaToken = { type: 'text', value: '。' }`
 - **When**: `isRubyToken(token)` is called
 - **Then**: Returns `false`
@@ -368,6 +376,7 @@ Task 6 (Configure Vitest) must be complete before unit tests can be written. The
 #### Test Suite: `readonly` Enforcement (Compile-time)
 
 **Test 17**: `type` property on `TextToken` is `readonly` (compile-time assertion)
+
 - **Given**: `const token: TextToken = { type: 'text', value: 'hi' }`
 - **When**: TypeScript attempts to compile `token.type = 'ruby'`
 - **Then**: TypeScript emits `TS2540` ("Cannot assign to 'type' because it is a read-only property")

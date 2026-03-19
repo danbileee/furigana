@@ -9,6 +9,7 @@ Furigana is a single-page web app (solopreneur project) that lets Japanese learn
 **Why:** Personal tool to help Japanese learners read native-level text without breaking reading flow.
 
 **Tech stack:**
+
 - Frontend: React Router v7 (SSR enabled), shadcn/ui, Tailwind CSS v4
 - Storage backend: Notion database (CMS) — NOT a traditional DB or localStorage for entry data
 - AI: OpenAI API (furigana generation + title generation — two calls per submission)

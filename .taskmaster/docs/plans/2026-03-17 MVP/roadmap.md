@@ -65,6 +65,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.23
 
 **Key Components**:
+
 - `app/routes/home.tsx` — rewritten as the primary application shell with `action` for furigana generation
 - `app/lib/ai/client.ts` — GPT-4o-mini client wrapper (server-only)
 - `app/lib/ai/prompts.ts` — system prompt and few-shot example definitions
@@ -74,6 +75,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - `app/app.css` — ruby CSS base rules (`display: ruby`, `display: ruby-text`)
 
 **Architectural Focus**:
+
 - Server-side `action` as the single integration point for GPT-4o-mini (API key never reaches client)
 - Parser produces a typed token array (`Array<{ type: 'text'; value: string } | { type: 'ruby'; kanji: string; reading: string }>`) rather than raw HTML — the component renders HTML from this type-safe structure, eliminating XSS surface
 - Ruby CSS defined in `@layer base` of `app.css` to ensure Tailwind v4's reset does not zero out `display: ruby` and `display: ruby-text`
@@ -81,6 +83,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Keyboard shortcut (Cmd/Ctrl+Enter) implemented via `onKeyDown` on the textarea only
 
 **Implementation Approach**:
+
 - Install `openai` npm package; configure client in `app/lib/ai/client.ts` using `process.env.OPENAI_API_KEY` (server-only, no `VITE_` prefix)
 - System prompt instructs GPT-4o-mini to return only the annotated string in `漢字{よみ}` format with no additional commentary; two or three few-shot examples lock in the format
 - Server `action` in `home.tsx`: read `text` from `formData`, call GPT-4o-mini, validate that the response matches the expected annotation format, return `{ annotationString }` to the client; on failure return `{ error }` with the original text preserved
@@ -90,6 +93,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Error state: render error message below textarea from `useActionData()`, preserving textarea content via controlled state initialized from `useActionData`
 
 **Test Strategy**:
+
 - Unit Testing: `app/lib/furigana/parser.ts` — exhaustive test matrix covering: standard kanji compounds, consecutive ruby tokens, pure hiragana input (no annotations), pure romaji, empty string, malformed braces (unclosed `{`, nested braces), mixed kanji/hiragana/punctuation. Test framework: Vitest (to be added as dev dependency).
 - Unit Testing: `app/lib/ai/prompts.ts` — snapshot test for system prompt string to catch accidental edits.
 - Integration Testing: `action` handler in `home.tsx` — mock the `openai` SDK client; test that a valid annotation string response is parsed and returned correctly, and that a malformed AI response triggers the error path.
@@ -98,6 +102,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - End-to-End Testing: Playwright — submit with empty textarea, assert no navigation and no error message.
 
 **Deliverables**:
+
 - Working furigana generation flow (input → AI → render) with no persistence
 - `app/lib/furigana/parser.ts` with full unit test coverage
 - `app/lib/ai/client.ts` and `app/lib/ai/prompts.ts`
@@ -106,6 +111,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - `.env.example` documenting required `OPENAI_API_KEY`
 
 **Success Criteria**:
+
 - Submitting a standard Japanese paragraph produces a reading view with correct ruby annotations
 - Pure hiragana or romaji input produces the reading view with no ruby elements (no crash)
 - Malformed AI response (simulated in tests) returns an inline error without losing textarea content
@@ -121,6 +127,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.22
 
 **Key Components**:
+
 - Turso database setup (schema, `.env` credentials)
 - `app/lib/db/client.ts` — server-only Turso client wrapper
 - `app/lib/db/queries.ts` — Drizzle query definitions typed with Zod
@@ -130,6 +137,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Updated `app/routes/home.tsx` — `action` now writes to Turso after AI generation; `loader` or `clientLoader` fetches sidebar list
 
 **Architectural Focus**:
+
 - Turso database with libSQL; Drizzle ORM defines the `entries` table: `{ id, rawText, annotationString, title, createdAt, deletedAt }`; `deletedAt` defaults to `null` — soft-delete in a single table, no separate trash collection
 - All Turso write operations (`action` functions) use the server-only `TURSO_AUTH_TOKEN`; reads for the sidebar list use the same token via a `clientLoader` (Option B, **preferred**, from Decision 3 above — sidebar shows a skeleton UI during loading)
 - Drizzle queries are defined as typed constants in `queries.ts` and validated with Zod schemas on response, ensuring the app never operates on unexpected Turso response shapes
@@ -137,17 +145,18 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - `Sidebar` component uses the layout pattern from Decision 2 (Option A): single component, CSS-controlled visibility
 
 **Implementation Approach**:
+
 - Turso project setup: free tier at https://turso.tech; create database and get `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN`. For local dev, use `file:local.db` as the URL; for CI, use `':memory:'`.
 - `app/lib/db/schema.ts` defines the `entries` table with Drizzle:
   ```ts
-  export const entries = sqliteTable('entries', {
-    id: text('id').primaryKey(),
-    rawText: text('raw_text').notNull(),
-    annotationString: text('annotation_string').notNull(),
-    title: text('title'),
-    createdAt: text('created_at').notNull(),
-    deletedAt: text('deleted_at'),
-  })
+  export const entries = sqliteTable("entries", {
+    id: text("id").primaryKey(),
+    rawText: text("raw_text").notNull(),
+    annotationString: text("annotation_string").notNull(),
+    title: text("title"),
+    createdAt: text("created_at").notNull(),
+    deletedAt: text("deleted_at"),
+  });
   ```
 - `clientLoader` in `home.tsx` fetches sidebar list with Drizzle SELECT: `db.select({ id: entries.id, title: entries.title, createdAt: entries.createdAt }).from(entries).where(isNull(entries.deletedAt)).orderBy(desc(entries.createdAt))` — returns `id`, `title`, `createdAt` (not full annotation string, to keep sidebar payload small)
 - `action` writes the new entry to Turso immediately after AI generation, before returning the annotation string to the client; the client receives both `annotationString` and `entryId` in the action response
@@ -156,6 +165,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - "New" button resets active entry ID to `null` and shows `InputArea`
 
 **Test Strategy**:
+
 - Unit Testing: Zod schemas for Turso query responses — assert that valid and invalid shapes pass and fail validation respectively.
 - Unit Testing: Drizzle query builders — snapshot tests to catch accidental edits to critical queries.
 - Integration Testing: Turso `action` handler — use in-memory libSQL (`:memory:` URL) or mock the Turso client; test that a successful AI response writes an entry and returns `entryId`, and that a Turso write failure returns an error without losing the annotation result.
@@ -164,6 +174,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - End-to-End Testing: Playwright — click "New"; assert reading view is replaced by the input area and no sidebar row is highlighted.
 
 **Deliverables**:
+
 - Turso project setup instructions in `README.md` (required env vars, database URL creation)
 - `app/lib/db/` module with client, queries, schema, and Zod validation
 - `app/components/sidebar/` with `Sidebar.tsx` and `SidebarEntry.tsx`
@@ -171,6 +182,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Updated `.env.example` with `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`
 
 **Success Criteria**:
+
 - Generated entries persist across page reloads
 - Sidebar lists all non-deleted entries in reverse-chronological order
 - Clicking a sidebar entry renders that entry's furigana view
@@ -186,12 +198,14 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.08
 
 **Key Components**:
+
 - `app/components/furigana/ViewModeToggle.tsx` — toggle control (shadcn/ui `ToggleGroup` or `Switch`)
 - Updated `app/app.css` — `[data-view-mode="on-hover"]` CSS rules with `@media (pointer: fine)` gate
 - Updated `app/routes/home.tsx` `clientLoader` — reads `viewMode` from `localStorage`
 - `app/components/furigana/ReadingView.tsx` — accepts `viewMode` prop, sets `data-view-mode` attribute on container
 
 **Architectural Focus**:
+
 - View mode is a CSS concern, not a React re-render concern: toggling mode updates a `data-view-mode` attribute on the reading container; `<rt>` visibility is controlled entirely by CSS selectors
 - `@media (pointer: fine)` gates the `:hover` CSS rule so it never fires on touch devices
 - Mobile tap delegation deferred to Milestone 8
@@ -199,6 +213,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Toggle state initialized from `clientLoader` data to avoid hydration mismatch
 
 **Implementation Approach**:
+
 - CSS in `app/app.css` (`@layer base`):
   ```css
   [data-view-mode="on-hover"] ruby rt {
@@ -218,17 +233,20 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Toggle `onChange` calls `localStorage.setItem('viewMode', newMode)` and updates local React state
 
 **Test Strategy**:
+
 - Unit Testing: `ViewModeToggle` component — assert correct initial state from loader data; assert `localStorage.setItem` is called on toggle change (via `vi.spyOn`).
 - Integration Testing: `clientLoader` — mock `localStorage`; assert default fallback is `'always'`; assert stored value is returned correctly.
 - End-to-End Testing: Playwright (desktop viewport) — set mode to "On Hover"; hover over a `<ruby>` element; assert `<rt>` becomes visible. Move mouse away; assert `<rt>` is hidden again.
 - End-to-End Testing: Playwright — set mode to "On Hover"; reload page; assert mode is restored to "On Hover".
 
 **Deliverables**:
+
 - `app/components/furigana/ViewModeToggle.tsx`
 - Updated `app/app.css` with view mode CSS rules
 - `clientLoader` returning persisted view mode preference
 
 **Success Criteria**:
+
 - "Always" mode renders all `<rt>` elements visible at all times
 - "On Hover" mode on desktop hides `<rt>` until mouse enters `<ruby>` parent
 - Preference survives page reload
@@ -243,11 +261,13 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.10
 
 **Key Components**:
+
 - `app/routes/api.title.ts` — dedicated route handling `POST /api/title`; calls GPT-4o-mini for title; UPDATEs the Turso entry
 - Updated `app/routes/home.tsx` — fires `useFetcher` after `action` completes (triggered by presence of `entryId` in action data)
 - Updated `app/components/sidebar/SidebarEntry.tsx` — title placeholder state and transition
 
 **Architectural Focus**:
+
 - Title generation is a follow-up `useFetcher` call, never a `useEffect` — `useFetcher.submit({ text, entryId }, { method: 'POST', action: '/api/title' })` fires after the primary `action` completes and the component receives `entryId` in `useActionData`
 - The `useFetcher` fire condition uses the React Router pattern: a `useEffect` with `[entryId]` dependency that calls `fetcher.submit` once — this is an acceptable `useEffect` use because the trigger is a state change (entryId arriving) with no loader/action equivalent for the follow-up dispatch itself
 - The route `api.title.ts` is a server-only resource route with no component; it reads `text` and `entryId` from the request, calls GPT-4o-mini, UPDATEs Turso, and returns `{ title }`
@@ -255,12 +275,14 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - On title generation failure, the 30-character placeholder remains permanently — no error surfaced to the user (per PRD spec)
 
 **Implementation Approach**:
+
 - `api.title.ts` action: extract `text` from form data, call `openai.chat.completions.create` with a short prompt asking for a 3–6 word English title, UPDATE the Turso entry with `{ title }`, return JSON response
 - Add route to `app/routes.ts`: `route("api/title", "routes/api.title.ts")`
 - In `home.tsx` component: after `actionData` arrives with `entryId`, fire `titleFetcher.submit` once; update local sidebar list state when `titleFetcher.data` resolves
 - Turso entry's `title` field: `null` on create (Milestone 2), populated by this milestone's UPDATE; sidebar query already returns `title` — null check in `SidebarEntry` selects placeholder vs. title display
 
 **Test Strategy**:
+
 - Unit Testing: title prompt in `app/lib/ai/prompts.ts` — snapshot test.
 - Integration Testing: `api.title.ts` action — mock `openai` SDK and Turso client; assert that a successful response UPDATEs Turso and returns `{ title }`; assert that an AI failure returns a 200 response with `{ title: null }` (so `useFetcher` resolves without crashing the client).
 - Integration Testing: failure path — Turso UPDATE fails after successful AI call; assert that the title is still returned to the client (best-effort write).
@@ -268,11 +290,13 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - End-to-End Testing: Playwright — simulate AI title failure (intercept network request); assert the truncated placeholder remains with no error UI.
 
 **Deliverables**:
+
 - `app/routes/api.title.ts` resource route
 - Updated `home.tsx` with `useFetcher` title dispatch
 - Updated `SidebarEntry.tsx` with placeholder/title transition
 
 **Success Criteria**:
+
 - Sidebar row shows 30-character placeholder immediately after generation
 - Title replaces placeholder with no layout shift when fetcher resolves
 - Title is persisted in Turso (survives page reload)
@@ -288,6 +312,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.16
 
 **Key Components**:
+
 - `app/routes/api.entries.$id.delete.ts` — `POST` action setting `deletedAt` on Turso entry
 - `app/routes/api.entries.$id.restore.ts` — `POST` action clearing `deletedAt`
 - `app/routes/api.entries.$id.destroy.ts` — `POST` action permanently deleting a Turso entry
@@ -297,6 +322,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Updated `app/components/sidebar/Sidebar.tsx` — trash icon trigger at bottom, toast integration
 
 **Architectural Focus**:
+
 - All delete/restore/destroy operations are `POST` actions on dedicated resource routes — no client-side `fetch` calls; `useFetcher` from each `SidebarEntry` dispatches the appropriate action
 - Soft-delete: `action` sets `deletedAt: new Date().toISOString()` via Turso UPDATE; sidebar `clientLoader` Drizzle query already filters `deletedAt == null` — the row disappears from sidebar immediately via optimistic `useFetcher` state
 - Mobile trash icon visibility deferred to Milestone 8
@@ -306,6 +332,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Trash retention: no auto-purge in MVP — entries stay until "Empty Trash" is explicitly triggered (per PRD decision)
 
 **Implementation Approach**:
+
 - Add four resource routes to `app/routes.ts`
 - `SidebarEntry` row layout: `group relative flex items-center` — trash icon absolutely positioned right, `opacity-0 group-hover:opacity-100` on desktop
 - Optimistic delete: `useFetcher.state === 'submitting'` hides the row immediately; on `useFetcher.data` error, restore row (rare — Turso UPDATE failures)
@@ -313,6 +340,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Restore action clears `deletedAt` via Turso UPDATE; sidebar `clientLoader` re-runs on navigation, but the sidebar list can be updated optimistically in local state
 
 **Test Strategy**:
+
 - Unit Testing: Turso Drizzle queries for trash list — Zod schema validation on response shape.
 - Integration Testing: `api.entries.$id.delete.ts` — mock Turso; assert `deletedAt` is set; assert deleted entry does not appear in subsequent sidebar list query.
 - Integration Testing: `api.entries.$id.restore.ts` — mock Turso; assert `deletedAt` is cleared; assert restored entry appears at original `createdAt` position in sidebar list.
@@ -323,12 +351,14 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - End-to-End Testing: Playwright — open Trash Menu; click "Empty Trash"; assert Trash Menu is empty.
 
 **Deliverables**:
+
 - Four resource routes for delete/restore/destroy/empty-trash
 - `TrashMenu.tsx` component
 - Updated `SidebarEntry.tsx` with desktop trash icon
 - Toast notification integrated in root layout
 
 **Success Criteria**:
+
 - Soft-deleted entries disappear from sidebar and appear in Trash Menu
 - Restore returns entry to original chronological sidebar position
 - "Empty Trash" permanently removes all trash entries
@@ -344,10 +374,12 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.07
 
 **Key Components**:
+
 - Updated `app/components/sidebar/SidebarEntry.tsx` — inline edit state, `<input>` swap, event handlers
 - `app/routes/api.entries.$id.title.ts` — `POST` action UPDATing title on Turso entry
 
 **Architectural Focus**:
+
 - Edit mode is a local React state flag in `SidebarEntry` — no global state involved
 - `onDoubleClick` on the title text element only (not the row `onClick`) activates edit mode; this is distinct from single-click which loads the entry
 - The row `onClick` must not fire when `onDoubleClick` fires — handled by calling `event.stopPropagation()` on the double-click handler, or by conditionally blocking the row click when `isEditing` is true
@@ -356,6 +388,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Mobile inline editing is explicitly out of scope for MVP; no edit affordance on mobile
 
 **Implementation Approach**:
+
 - `SidebarEntry` manages `isEditing: boolean` and `editValue: string` state
 - When `isEditing` is true, render `<input>` in place of title text, pre-filled with current title, with `autoFocus`
 - `onKeyDown`: Enter → confirm, Escape → cancel (`setIsEditing(false)`, restore `editValue`)
@@ -365,6 +398,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Add route to `app/routes.ts`
 
 **Test Strategy**:
+
 - Unit Testing: `SidebarEntry` in edit mode — mock `useFetcher`; assert that Enter with non-empty value calls `fetcher.submit`; assert that Enter with empty/whitespace does not call `fetcher.submit` and restores previous title; assert that Escape cancels without calling `fetcher.submit`.
 - Unit Testing: assert that `onDoubleClick` sets `isEditing: true` and `onClick` does not trigger row navigation when `isEditing` is true.
 - Integration Testing: `api.entries.$id.title.ts` — mock Turso; assert UPDATE is called with correct title; assert response.
@@ -373,10 +407,12 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - End-to-End Testing: Playwright (desktop) — double-click title; type new title; press Escape; assert previous title is restored.
 
 **Deliverables**:
+
 - Updated `SidebarEntry.tsx` with inline edit state and handlers
 - `app/routes/api.entries.$id.title.ts` resource route
 
 **Success Criteria**:
+
 - Double-click activates inline edit on desktop; single-click still loads entry
 - Enter and blur confirm; Escape cancels
 - Empty submission silently restores previous title
@@ -394,37 +430,44 @@ The milestone sequencing strategy follows the review's recommended implementatio
 #### 7a: Relative Timestamps
 
 **Key Components**:
+
 - `app/lib/utils/timestamp.ts` — `formatTimestamp(date: Date): string` using `Intl.RelativeTimeFormat` and `Intl.DateTimeFormat`
 - Updated `app/components/sidebar/SidebarEntry.tsx` — timestamp display
 - `useTimestampRefresh` custom hook — `setInterval` every 60 seconds; this is the one approved `useEffect` use (recurring timer with no loader/action equivalent)
 
 **Implementation Approach**:
+
 - `formatTimestamp`: if `Date.now() - date.getTime() < 24 * 60 * 60 * 1000`, use `Intl.RelativeTimeFormat('en', { numeric: 'auto' })`; otherwise use `Intl.DateTimeFormat('en', { month: 'short', day: 'numeric' })`
 - `useTimestampRefresh` hook: sets up `setInterval(60_000)` via `useEffect` with cleanup on unmount; triggers a re-render of sidebar entries (via a `tick` counter in state) every 60 seconds
 
 #### 7b: Session Persistence
 
 **Key Components**:
+
 - Updated `app/routes/home.tsx` `clientLoader` — reads `lastViewedEntryId` from `localStorage`, fetches entry from Turso, handles deleted entry fallback
 
 **Implementation Approach**:
+
 - Every sidebar row click and every successful generation sets `localStorage.setItem('lastViewedEntryId', entryId)`
 - `clientLoader` reads `lastViewedEntryId`; if null, returns `{ entry: null }`; fetches entry from Turso; checks `!entry || entry.deletedAt` → returns `{ entry: null }`; otherwise returns `{ entry }`
 - Component initializes from `clientLoader` data: if `entry` is non-null, show `ReadingView`; if null, show `InputArea`
 
 **Test Strategy**:
+
 - Unit Testing: `formatTimestamp` — test matrix: 30 seconds ago → "just now" (or "30 seconds ago"), 5 minutes ago → "5 minutes ago", 25 hours ago → "Mar 17" (or equivalent date).
 - Unit Testing: `clientLoader` — mock `localStorage` and Turso fetch; assert null lastViewedId → `{ entry: null }`; assert deleted entry → `{ entry: null }`; assert valid entry → `{ entry: ... }`.
 - End-to-End Testing: Playwright — generate entry; reload page; assert entry's reading view is restored without re-submission.
 - End-to-End Testing: Playwright — generate entry; soft-delete it; reload page; assert empty input state is shown.
 
 **Deliverables**:
+
 - `app/lib/utils/timestamp.ts` with unit tests
 - Updated `home.tsx` `clientLoader` with session persistence
 - `useTimestampRefresh` hook
 - Updated `SidebarEntry.tsx` with timestamp display
 
 **Success Criteria**:
+
 - Timestamps update every 60 seconds; entries older than 24 hours show date format
 - Page reload restores last-viewed entry; deleted last-viewed falls back to empty input state
 - `pnpm type-check` passes with zero errors
@@ -438,6 +481,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 **Weight**: 0.07
 
 **Key Components**:
+
 - `app/components/furigana/ReadingView.tsx` — mobile tap delegation with `.active` class toggle
 - Updated `app/app.css` — `[data-view-mode="on-hover"] ruby.active rt` CSS rule
 - `app/components/sidebar/SidebarEntry.tsx` — mobile trash icon visibility (always-visible via CSS)
@@ -445,12 +489,14 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - `app/components/layout/AppShell.tsx` — top-level layout component managing sidebar open state
 
 **Architectural Focus**:
+
 - **Decision 1 Resolution (Option B)**: Mobile tap delegation via a single delegated `click`/`touchstart` listener on the reading container; `event.target` walks up to the nearest `<ruby>` ancestor and toggles `.active` class. CSS reveals `rt` for `.active ruby` within a `[data-view-mode="on-hover"]` container.
 - **Decision 2 Resolution (Option A)**: Single `Sidebar` component with CSS-controlled visibility. On mobile, render within a `Sheet` wrapper; hamburger icon trigger opens/closes the drawer.
 - `@media (pointer: fine)` gates the `:hover` CSS rule to prevent touch hover sticky behavior; mobile tap delegation provides the full "On Hover" mode self-test experience on touch devices
 - Mobile trash icon: always-visible via `flex md:hidden`; two separate icon instances (one for mobile, one for desktop) or CSS-only approach using opacity transitions
 
 **Implementation Approach**:
+
 - **Mobile Tap Delegation** (`ReadingView.tsx`):
   - Add a `useRef` on the reading container and attach one delegated `touchstart` + `click` listener (via direct DOM `addEventListener` in `useEffect`)
   - Handler: `event.target` walks up to nearest `<ruby>` ancestor via `closest('ruby')`, toggles `.active` class via `classList.toggle('active')`
@@ -477,6 +523,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
     ```
 
 **Test Strategy**:
+
 - End-to-End Testing: Playwright (mobile viewport emulation) — set mode to "On Hover"; tap a `<ruby>` element; assert `<rt>` becomes visible. Tap elsewhere; assert `<rt>` is hidden.
 - End-to-End Testing: Playwright (mobile viewport) — assert trash icon is visible without hover; click icon; assert row disappears.
 - End-to-End Testing: Playwright (mobile viewport) — tap hamburger; assert sidebar drawer opens; tap entry; assert drawer closes and entry loads.
@@ -484,6 +531,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - End-to-End Testing: Playwright (desktop) — verify that mobile-specific CSS and drawer are not present or active.
 
 **Deliverables**:
+
 - Updated `ReadingView.tsx` with mobile tap delegation
 - Updated `SidebarEntry.tsx` with mobile trash icon visibility
 - Updated `Sidebar.tsx` with mobile drawer integration
@@ -491,6 +539,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Updated `app/app.css` with mobile-specific CSS rules
 
 **Success Criteria**:
+
 - Mobile "On Hover" mode reveals `<rt>` on tap and hides on second tap or tap-elsewhere
 - Mobile trash icon is always visible; desktop trash icon appears on row hover
 - Mobile sidebar drawer opens/closes correctly; tap-outside dismisses
@@ -514,6 +563,7 @@ The milestone sequencing strategy follows the review's recommended implementatio
 - Milestone 7 → Milestone 8: Milestone 8 requires all feature milestones (1–7) to be complete; mobile behavior is additive on top of the full desktop feature set.
 
 **Sequential Critical Path**:
+
 ```
 Milestone 1 → Milestone 2 → Milestone 4 → Milestone 6
                  ↓
@@ -525,6 +575,7 @@ Milestone 8 (after Milestone 7 complete)
 ```
 
 **Parallel Work Opportunities**:
+
 - Milestone 3 (view mode toggle) can begin immediately after Milestone 1 ships `ReadingView`, in parallel with Milestone 2
 - Milestone 7a (`formatTimestamp` utility) can be written and tested during any milestone
 - Milestones 7a and 7b can all run in parallel with each other once Milestone 2 is complete
@@ -539,6 +590,7 @@ Milestone 8 (after Milestone 7 complete)
 - **TypeScript strict mode throughout.** `exactOptionalPropertyTypes` means optional Turso response fields require explicit `| undefined` in Zod schemas. Validate Zod schemas for all Drizzle query responses in Milestone 2 before dependent milestones build on them.
 
 **External Dependencies**:
+
 - **OpenAI API**: GPT-4o-mini is the only AI dependency. Pay-as-you-go billing must be enabled before Milestone 1 integration tests can run against the live API. Rate limits (tokens per minute) are unlikely to be hit at development volume.
 - **Turso**: Free tier (500 databases, 9 GB, 1B row reads/month). Local dev uses `file:local.db`; CI uses in-memory `:memory:`. No test dataset quota concerns.
 - **shadcn/ui components**: `Sheet`, `Toast`/`Sonner`, and `ToggleGroup` may not yet be installed. Each is added with `pnpx shadcn@latest add <component> --defaults` as needed per milestone.
@@ -549,33 +601,37 @@ Milestone 8 (after Milestone 7 complete)
 ## Implementation Notes
 
 **Key Architectural Decisions Made in This Roadmap**:
+
 - Mobile tap behavior: Option B (event delegation with `.active` class toggle) — implemented in Milestone 8 to deliver the full "On Hover" self-test experience on mobile without per-element event listeners.
 - Sidebar rendering: Option A (single component, CSS-controlled visibility) — SSR-compatible, simpler state model. Mobile drawer integration deferred to Milestone 8.
 - Turso read strategy: Option B (`clientLoader` for sidebar list) — **preferred**. Sidebar renders a skeleton UI during the loading state to prevent flash of empty content; `lastViewedEntryId` resolves in the same round trip.
 
 **Turso Schema — Define Completely in Milestone 2**:
 The `entries` table schema must include all fields from day one to avoid migrations:
+
 ```ts
-export const entries = sqliteTable('entries', {
-  id: text('id').primaryKey(),
-  rawText: text('raw_text').notNull(),
-  annotationString: text('annotation_string').notNull(),
-  title: text('title'),
-  createdAt: text('created_at').notNull(),
-  deletedAt: text('deleted_at'),
-})
+export const entries = sqliteTable("entries", {
+  id: text("id").primaryKey(),
+  rawText: text("raw_text").notNull(),
+  annotationString: text("annotation_string").notNull(),
+  title: text("title"),
+  createdAt: text("created_at").notNull(),
+  deletedAt: text("deleted_at"),
+});
 ```
 
 **XSS Prevention**:
 The annotation string parser in Milestone 1 is the only point where external data (AI output) is transformed into HTML. The parser must produce only `<ruby>`, `<rt>`, `<rp>`, and text nodes — never raw HTML passthrough. React's JSX rendering (not `dangerouslySetInnerHTML`) is the safe rendering path.
 
 **Known Risks and Mitigations**:
+
 - AI format non-compliance (missing braces, extra prose): server-side validation in the `action` before Turso INSERT; retry with stricter prompt on format failure; surface error to user if retry also fails.
 - Turso data privacy: `TURSO_AUTH_TOKEN` is strictly server-side; entries are private by default (auth token always required).
 - SSR hydration mismatch from `localStorage`: enforced by always reading in `clientLoader`, never in component body — verify with React strict mode enabled in development.
 - Japanese font rendering gap: add `Noto Sans JP` as a web font import for Japanese text specifically; the existing Geist Variable font covers Latin but not CJK glyphs.
 
 **Assumptions**:
+
 - A single engineer implements all milestones sequentially; parallel milestone opportunities are noted for future team growth.
 - Turso free tier document and API request limits are not a constraint at MVP development and personal-use production volume. Local development uses `file:local.db` (persisted); CI/tests use `:memory:` (in-memory, no quota).
 - No CI/CD pipeline is in place yet; Vitest unit tests and Playwright end-to-end tests are run locally until a pipeline is configured.
@@ -589,6 +645,7 @@ The annotation string parser in Milestone 1 is the only point where external dat
 ### Project Context
 
 **Technology Stack**:
+
 - React Router v7 (SSR enabled, `ssr: true`)
 - React 19, TypeScript 5.8 (strict mode: `exactOptionalPropertyTypes`, `noUncheckedIndexedAccess`, `noImplicitOverride`, `noPropertyAccessFromIndexSchemaIndexSignature`)
 - Tailwind CSS v4 (CSS-first config via `app/app.css`)
@@ -601,6 +658,7 @@ The annotation string parser in Milestone 1 is the only point where external dat
 - Drizzle ORM for database access (libSQL/Turso)
 
 **Existing Patterns to Follow**:
+
 - Route files export typed `loader`, `clientLoader`, `action`, and default component — use `satisfies RouteConfig` pattern from `routes.ts`
 - Import types with `import type {}` inline style (ESLint `consistent-type-imports` enforced)
 - No `any`, no `as` type casts — use `satisfies` operator or proper generics
@@ -608,6 +666,7 @@ The annotation string parser in Milestone 1 is the only point where external dat
 - `useFetcher` for follow-up async calls after action completion
 
 **Key Constraints**:
+
 - `OPENAI_API_KEY`, `TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN` must never carry the `VITE_` prefix — server-only env vars
 - All Turso write operations go through server-side `action` functions
 - Parser output must be structured tokens, never raw HTML strings passed to `dangerouslySetInnerHTML`

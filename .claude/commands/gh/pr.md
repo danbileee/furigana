@@ -14,6 +14,7 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
 1. **Determine the base branch**: Run `git fetch origin` and then detect the base branch (see step 2).
 
 2. **Detect the base branch**: Use `release/*` branch detection with fallback:
+
    ```bash
    git fetch origin
    BASE=$(git branch -r | grep 'origin/release/' | sed 's|.*origin/||' | sort -V | tail -1)
@@ -22,7 +23,9 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
    fi
    echo "Base branch: $BASE"
    ```
+
    After determining `$BASE`, inspect current state:
+
    ```bash
    git status
    git log origin/$BASE..HEAD --oneline
@@ -38,6 +41,7 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
    - Examples: `Add login form validation`, `Fix token refresh bug on expiry`, `Install testing dependencies`
 
 4. **Draft the PR body** using this semantic template:
+
    ```
    ## Summary
    [One paragraph explaining the purpose and value of this PR]
@@ -68,6 +72,7 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
 6. **Present and confirm**: Display the proposed PR title and body to the user in a clear format. Wait for confirmation before proceeding (the user should have a chance to edit the title or body).
 
 7. **Execute**: Once confirmed, run:
+
    ```bash
    gh pr create --base "$BASE" --title "<title>" --body "<body>" --reviewer danbileee
    ```

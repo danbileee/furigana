@@ -23,6 +23,7 @@ When using Sanity for a feature that will accrue soft-delete and AI-generated fi
 ## useEffect Rule (Project-Specific)
 
 This project enforces: `useEffect` only for cases with no loader/action/useFetcher equivalent. Approved uses:
+
 - Recurring timers (relative timestamp refresh via `setInterval`)
 - DOM event listener attachment (delegated touch/click handler on reading container)
 
@@ -31,6 +32,7 @@ Everything else: `clientLoader`, `loader`, `action`, or `useFetcher`.
 ## Mobile Hover Interaction Pattern
 
 For CSS-driven "On Hover" reveals (furigana visibility, trash icons) on touch devices:
+
 - Gate the CSS `:hover` rule with `@media (pointer: fine)`
 - Add a single delegated `click` listener on the container that toggles `.active` on the target element
 - Use `opacity` + `visibility` (not `display: none`) to allow CSS transitions
@@ -38,6 +40,7 @@ For CSS-driven "On Hover" reveals (furigana visibility, trash icons) on touch de
 ## Resource Route Pattern for CMS Operations
 
 For CRUD operations on a CMS (Sanity), use dedicated resource routes with no UI component:
+
 - `POST /api/entries/:id/delete` → sets `deletedAt`
 - `POST /api/entries/:id/restore` → clears `deletedAt`
 - `POST /api/entries/:id/destroy` → hard delete

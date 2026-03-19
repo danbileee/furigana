@@ -30,17 +30,17 @@ The parsing step — converting `今日{きょう}` into `<ruby>今日<rp>(</rp>
 
 **AI Model Options — Comparison Table:**
 
-| | **GPT-4o-mini** *(preferred)* | **Claude Haiku 4.5** | **Gemini 2.5 Flash** |
-|---|---|---|---|
-| **Input cost (per 1M tokens)** | $0.15 | $1.00 | $0.30 |
-| **Output cost (per 1M tokens)** | $0.60 | $5.00 | $2.50 |
-| **Context window** | 128k tokens | 200k tokens | 1M tokens |
-| **Latency** | Fast | Fastest | Fast |
-| **Japanese accuracy** | High — GPT-4o family has strong CJK coverage; mini variant retains most of this for structured tasks | High — Claude models have strong multilingual instruction following; Haiku 4.5 is tuned for speed with near-frontier intelligence | High — Gemini 2.5 Flash has strong Japanese support and a generous free tier for prototyping |
-| **Structured output / format compliance** | Excellent — supports JSON mode and system prompt constraints reliably | Excellent — follows structured formatting instructions precisely | Good — follows instructions but can occasionally add prose around structured output |
-| **Free tier for prototyping** | No free tier; pay-as-you-go from first request | No free tier; pay-as-you-go from first request | Yes — Gemini 2.5 Flash has a free tier (rate-limited) |
-| **SDK / integration ease** | Excellent — `openai` npm package, minimal setup | Excellent — `@anthropic-ai/sdk` npm package, minimal setup | Good — `@google/genai` npm package; slightly more verbose setup |
-| **Estimated cost per 1,000-word article** (approx. 1,500 input tokens, 800 output tokens) | ~$0.00070 | ~$0.0055 | ~$0.0025 |
+|                                                                                           | **GPT-4o-mini** _(preferred)_                                                                        | **Claude Haiku 4.5**                                                                                                              | **Gemini 2.5 Flash**                                                                         |
+| ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+| **Input cost (per 1M tokens)**                                                            | $0.15                                                                                                | $1.00                                                                                                                             | $0.30                                                                                        |
+| **Output cost (per 1M tokens)**                                                           | $0.60                                                                                                | $5.00                                                                                                                             | $2.50                                                                                        |
+| **Context window**                                                                        | 128k tokens                                                                                          | 200k tokens                                                                                                                       | 1M tokens                                                                                    |
+| **Latency**                                                                               | Fast                                                                                                 | Fastest                                                                                                                           | Fast                                                                                         |
+| **Japanese accuracy**                                                                     | High — GPT-4o family has strong CJK coverage; mini variant retains most of this for structured tasks | High — Claude models have strong multilingual instruction following; Haiku 4.5 is tuned for speed with near-frontier intelligence | High — Gemini 2.5 Flash has strong Japanese support and a generous free tier for prototyping |
+| **Structured output / format compliance**                                                 | Excellent — supports JSON mode and system prompt constraints reliably                                | Excellent — follows structured formatting instructions precisely                                                                  | Good — follows instructions but can occasionally add prose around structured output          |
+| **Free tier for prototyping**                                                             | No free tier; pay-as-you-go from first request                                                       | No free tier; pay-as-you-go from first request                                                                                    | Yes — Gemini 2.5 Flash has a free tier (rate-limited)                                        |
+| **SDK / integration ease**                                                                | Excellent — `openai` npm package, minimal setup                                                      | Excellent — `@anthropic-ai/sdk` npm package, minimal setup                                                                        | Good — `@google/genai` npm package; slightly more verbose setup                              |
+| **Estimated cost per 1,000-word article** (approx. 1,500 input tokens, 800 output tokens) | ~$0.00070                                                                                            | ~$0.0055                                                                                                                          | ~$0.0025                                                                                     |
 
 **Preferred choice: GPT-4o-mini.** It is the lowest-cost option in production at solopreneur scale (~$0.00070 per article), demonstrates excellent format compliance with system prompt constraints (critical for the `漢字{よみ}` structured output task), and has strong CJK coverage that is more than sufficient for standard Japanese furigana annotation. Claude Haiku 4.5 and Gemini 2.5 Flash remain viable alternatives — Haiku 4.5 for its fastest-in-class latency and Gemini 2.5 Flash for zero-cost prototyping — but GPT-4o-mini is the recommended path to production.
 
@@ -132,7 +132,7 @@ A more reliable mobile approach uses JavaScript: attach a `touchstart` or `click
 ```typescript
 // In the route file
 export async function clientLoader() {
-  const viewMode = localStorage.getItem('viewMode') ?? 'always';
+  const viewMode = localStorage.getItem("viewMode") ?? "always";
   return { viewMode };
 }
 ```
@@ -157,16 +157,16 @@ The PRD specifies no user authentication (out of scope). The intended architectu
 
 **Storage Backend Options — Comparison Table:**
 
-| | **Turso (Free Tier)** *(preferred)* | **Directus (Self-Hosted)** | **Contentful (Free Tier)** |
-|---|---|---|---|
-| **Free tier** | 500M reads/mo, 10M writes/mo, 5 GB storage, 100 databases | Fully free to self-host; infra ~$5/mo | 100k API calls/mo, 25 content types |
-| **Developer experience** | Excellent — standard SQL; Drizzle ORM via `drizzle-orm/libsql`; local dev with `file:local.db` | Excellent — auto-generated REST + GraphQL from SQL schema | Good — polished UI but less flexible for structured data |
-| **API quality** | High — raw SQL or Drizzle ORM; no new query language to learn | High — REST + GraphQL auto-generated | Good — limited filtering; editorial-CMS-focused |
-| **Real-time capability** | None in production (experimental as of 2026-03) — not a constraint for this app | Yes — WebSocket subscriptions and SSE | Webhooks only |
-| **Fit for this use case** | Strong — flat relational table is a natural SQL fit; private by default; very generous free limits | Strong — full control, no rate limits, private | Moderate — 100k API calls may be tight; not designed for structured rows |
-| **Vendor lock-in** | Very low — libSQL is open-source SQLite fork (MIT); self-hostable | Low — standard SQL | Medium — Contentful-specific |
-| **Maintenance burden** | Low — fully managed | Medium — requires a server | Low — fully managed |
-| **Private on free tier** | Yes — auth token always required | Yes | Yes |
+|                           | **Turso (Free Tier)** _(preferred)_                                                                | **Directus (Self-Hosted)**                                | **Contentful (Free Tier)**                                               |
+| ------------------------- | -------------------------------------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------ |
+| **Free tier**             | 500M reads/mo, 10M writes/mo, 5 GB storage, 100 databases                                          | Fully free to self-host; infra ~$5/mo                     | 100k API calls/mo, 25 content types                                      |
+| **Developer experience**  | Excellent — standard SQL; Drizzle ORM via `drizzle-orm/libsql`; local dev with `file:local.db`     | Excellent — auto-generated REST + GraphQL from SQL schema | Good — polished UI but less flexible for structured data                 |
+| **API quality**           | High — raw SQL or Drizzle ORM; no new query language to learn                                      | High — REST + GraphQL auto-generated                      | Good — limited filtering; editorial-CMS-focused                          |
+| **Real-time capability**  | None in production (experimental as of 2026-03) — not a constraint for this app                    | Yes — WebSocket subscriptions and SSE                     | Webhooks only                                                            |
+| **Fit for this use case** | Strong — flat relational table is a natural SQL fit; private by default; very generous free limits | Strong — full control, no rate limits, private            | Moderate — 100k API calls may be tight; not designed for structured rows |
+| **Vendor lock-in**        | Very low — libSQL is open-source SQLite fork (MIT); self-hostable                                  | Low — standard SQL                                        | Medium — Contentful-specific                                             |
+| **Maintenance burden**    | Low — fully managed                                                                                | Medium — requires a server                                | Low — fully managed                                                      |
+| **Private on free tier**  | Yes — auth token always required                                                                   | Yes                                                       | Yes                                                                      |
 
 **Key consideration for this use case:** See Decision 1 for a full analysis of the `.env`-based per-deployment Turso approach and its trade-offs. Turso databases are private by default (unlike Sanity's public datasets on the free tier).
 
@@ -192,7 +192,7 @@ Title generation is a secondary request made after the furigana result is return
 const titleFetcher = useFetcher();
 
 // Trigger title generation after furigana result arrives:
-titleFetcher.submit({ text: submittedText, entryId }, { method: 'POST', action: '/api/title' });
+titleFetcher.submit({ text: submittedText, entryId }, { method: "POST", action: "/api/title" });
 ```
 
 The placeholder (first ~30 characters) is shown immediately; when the title fetcher response resolves, it replaces the placeholder via `titleFetcher.data`.
@@ -271,7 +271,7 @@ In React Router v7, the correct place to read `localStorage` on page load is a `
 ```typescript
 // In the route file
 export async function clientLoader() {
-  const lastViewedId = localStorage.getItem('lastViewedEntryId');
+  const lastViewedId = localStorage.getItem("lastViewedEntryId");
   if (!lastViewedId) return { entry: null };
   const entry = await fetchEntry(lastViewedId); // fetches from CMS or IndexedDB
   if (!entry || entry.deletedAt) return { entry: null }; // handles deleted entry case
@@ -381,12 +381,14 @@ The proposed approach stores the Turso database URL and auth token in `.env` env
 - **Setup friction for non-technical users:** Requiring the user to create a Turso account, create a database, and copy credentials into `.env` is a standard setup step for cloud-based tools. For a solopreneur personal tool this is acceptable; for a product distributed to general users it would need a different approach (e.g., a managed backend or OAuth-based integration).
 
 **Key factors:**
+
 - No authentication is in scope → the `.env` per-deployment model eliminates the shared namespace problem without requiring auth.
 - Cloud sync and cross-device access are explicitly out of scope → the primary advantage of a backend database is persistent cloud storage per deployment, not multi-user sync.
 - Real-time title updates are handled via `useFetcher.data` polling, not DB push subscriptions → Turso's lack of a production real-time API is not a constraint for this app.
 - Future PRD versions may add authentication and sync → a flat relational table migrates cleanly to a multi-user schema by adding a `user_id` column; the migration path is straightforward.
 
 **Paths forward:**
+
 - **Path A: Turso free tier (preferred)** → Timeline: 0.5–1 day (database setup, `@libsql/client` or `drizzle-orm/libsql` integration, schema creation); Complexity: Low-Medium; Trade-offs: Persistent cloud storage, very generous free limits (500M reads/mo, 10M writes/mo, 5 GB), private by default, natural SQL fit, very low vendor lock-in (libSQL is open-source).
 - **Path B: IndexedDB (client-only)** → Timeline: 0.5 days to integrate `idb`; Complexity: Low; Trade-offs: Data is browser-local, lost on storage clear, no cross-device access. Useful as a fallback or interim approach.
 - **Path C: Directus self-hosted** → Timeline: 1.5–2 days (Docker/Railway setup, schema, REST integration); Complexity: Medium-High; Trade-offs: Full control, private datasets, no vendor lock-in, ~$5/mo infrastructure cost.
@@ -398,12 +400,14 @@ The proposed approach stores the Turso database URL and auth token in `.env` env
 **Preferred choice: GPT-4o-mini.** Rationale: lowest cost in production at solopreneur scale (~$0.00070 per article), excellent format compliance with structured output system prompts, and sufficient Japanese accuracy for this task. The `openai` npm package is minimal to set up — approximately 30 minutes to integrate.
 
 **Key factors:**
+
 - Both tasks are structured output calls: format compliance is more important than raw intelligence.
 - Cost at solopreneur scale is negligible for any of the three options, but GPT-4o-mini is an order of magnitude cheaper than Claude Haiku 4.5.
 - Minimizing provider surface area (one SDK, one API key, one invoice) favors using the same provider for both calls.
 - Free-tier prototyping before committing to billing is available with Gemini 2.5 Flash.
 
 **Paths forward:**
+
 - **Path A: GPT-4o-mini (preferred)** → Timeline: 30 minutes to integrate `openai` SDK; Complexity: Low; Trade-offs: No free tier, lowest cost in production, excellent format compliance.
 - **Path B: Claude Haiku 4.5** → Timeline: 30 minutes to integrate `@anthropic-ai/sdk`; Complexity: Low; Trade-offs: No free tier, slightly higher cost than GPT-4o-mini, excellent format compliance, fastest latency.
 - **Path C: Gemini 2.5 Flash** → Timeline: 45 minutes to integrate `@google/genai`; Complexity: Low-Medium; Trade-offs: Free tier available for prototyping; slightly more verbose output requiring stricter prompting.
@@ -415,11 +419,13 @@ The proposed approach stores the Turso database URL and auth token in `.env` env
 The PRD leaves this as "to be determined in implementation." This is a minor decision that does not block MVP development.
 
 **Key factors:**
+
 - Too short a retention period (e.g., 24 hours) risks unexpected data loss for infrequent users.
 - No automatic deletion means the Trash grows unbounded — acceptable for low-volume personal use.
 - A simple implementation: no automatic deletion in MVP; entries stay in Trash until explicitly emptied.
 
 **Paths forward:**
+
 - **Path A: No automatic deletion (MVP)** → Simplest; entries persist until the user empties the Trash. Acceptable for a personal-use tool.
 - **Path B: TTL-based deletion (e.g., 30 days)** → Requires a scheduled job or a check on Trash Menu open. Adds complexity; deferred to post-MVP.
 
@@ -459,18 +465,18 @@ The annotation storage format (`今日{きょう}は...`) is compact, human-read
 
 ## Risk Assessment
 
-| Risk | Probability | Impact | Mitigation |
-|------|-------------|--------|------------|
-| AI model outputs malformed annotation format (missing braces, extra prose) | Medium | High — breaks ruby rendering | Validate output server-side before storing; retry with stricter prompt on format failure |
-| `:hover` CSS behaves unexpectedly on mobile (reveals all furigana on tap) | Medium | Medium — degrades "On Hover" mode on mobile | Use `@media (pointer: fine)` to gate `:hover` rule; fall back to JS click handler on touch devices |
-| Turso service downtime | Low (managed SLA) | Medium — entries temporarily inaccessible | Accept risk; implement `localStorage` cache fallback for recently viewed entries on next iteration |
-| `TURSO_AUTH_TOKEN` exposed via `VITE_` prefix | Low | High — token could be used to write/delete entries | Use server-only env var naming (no `VITE_` prefix); enforce in code review and `.env.example` documentation |
-| IndexedDB data loss (user clears browser storage) | Low | Medium — all history lost | Mitigated by preferring Turso free tier; if IndexedDB is used, document as a known limitation |
-| Turso free tier row limits exceeded (500M reads, 10M writes) | Very Low (MVP scale) | Low | Unlikely at solopreneur-personal-use scale; free tier is very generous |
-| SSR hydration mismatch from localStorage reads | Medium | Low — causes React warning and possible flash of wrong content | Always use `clientLoader` for client-only storage reads; never read `localStorage` in component body or SSR `loader` |
-| AI title generation fails silently | Medium | Low — fallback to 30-char placeholder is acceptable per PRD | No mitigation needed; PRD explicitly accepts this failure mode |
-| Japanese font not available on user's system | Low | Low — system-ui fallback renders correctly, just with different aesthetics | Specify a web font fallback for Japanese glyphs |
-| Trash retention grows unbounded in MVP (no auto-purge) | Low | Low — only affects storage quota for personal-use data volume | Accept for MVP; add TTL-based purge in a post-MVP iteration |
+| Risk                                                                       | Probability          | Impact                                                                     | Mitigation                                                                                                           |
+| -------------------------------------------------------------------------- | -------------------- | -------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
+| AI model outputs malformed annotation format (missing braces, extra prose) | Medium               | High — breaks ruby rendering                                               | Validate output server-side before storing; retry with stricter prompt on format failure                             |
+| `:hover` CSS behaves unexpectedly on mobile (reveals all furigana on tap)  | Medium               | Medium — degrades "On Hover" mode on mobile                                | Use `@media (pointer: fine)` to gate `:hover` rule; fall back to JS click handler on touch devices                   |
+| Turso service downtime                                                     | Low (managed SLA)    | Medium — entries temporarily inaccessible                                  | Accept risk; implement `localStorage` cache fallback for recently viewed entries on next iteration                   |
+| `TURSO_AUTH_TOKEN` exposed via `VITE_` prefix                              | Low                  | High — token could be used to write/delete entries                         | Use server-only env var naming (no `VITE_` prefix); enforce in code review and `.env.example` documentation          |
+| IndexedDB data loss (user clears browser storage)                          | Low                  | Medium — all history lost                                                  | Mitigated by preferring Turso free tier; if IndexedDB is used, document as a known limitation                        |
+| Turso free tier row limits exceeded (500M reads, 10M writes)               | Very Low (MVP scale) | Low                                                                        | Unlikely at solopreneur-personal-use scale; free tier is very generous                                               |
+| SSR hydration mismatch from localStorage reads                             | Medium               | Low — causes React warning and possible flash of wrong content             | Always use `clientLoader` for client-only storage reads; never read `localStorage` in component body or SSR `loader` |
+| AI title generation fails silently                                         | Medium               | Low — fallback to 30-char placeholder is acceptable per PRD                | No mitigation needed; PRD explicitly accepts this failure mode                                                       |
+| Japanese font not available on user's system                               | Low                  | Low — system-ui fallback renders correctly, just with different aesthetics | Specify a web font fallback for Japanese glyphs                                                                      |
+| Trash retention grows unbounded in MVP (no auto-purge)                     | Low                  | Low — only affects storage quota for personal-use data volume              | Accept for MVP; add TTL-based purge in a post-MVP iteration                                                          |
 
 ---
 
@@ -505,6 +511,7 @@ The following questions remain open and should be answered before implementation
 Pricing data for OpenAI (GPT-4o-mini: $0.15/$0.60 per MTok) sourced from pricepertoken.com cross-referenced with openai.com/api/pricing as of 2026-03-17. Anthropic Claude pricing sourced from official Anthropic documentation (platform.claude.com/docs). Gemini pricing sourced from ai.google.dev/pricing. Turso free tier limits sourced from turso.tech/pricing (500M reads/mo, 10M writes/mo, 5 GB storage, 100 databases). Turso SDK documentation sourced from docs.turso.tech/sdk/ts. libSQL (open-source backend) sourced from github.com/tursodatabase/libsql. Contentful free tier limits sourced from contentful.com/pricing. Directus pricing sourced from directus.io docs; note that the Directus Cloud $15/mo Starter tier was retired in December 2025 — self-hosting is the practical free option. Browser support for HTML `<ruby>` sourced from caniuse.com (97.5% global coverage). All pricing and plan details should be verified against official documentation at implementation time, as provider pricing changes frequently.
 
 The following items from the original review are now resolved by the updated PRD and no longer require decisions:
+
 - Default view mode → **Always** (resolved)
 - Character limit → **10,000 characters, UI-enforced with counter and disabled submit** (resolved)
 - Inline title editing on mobile → **Deferred to post-MVP; desktop-only** (resolved)

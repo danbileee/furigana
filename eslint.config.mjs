@@ -23,10 +23,7 @@ export default defineConfig([
       parser: tsParser,
       parserOptions: {
         projectService: {
-          allowDefaultProject: [
-            "packages/interface/tsup.config.ts",
-            "apps/api/test/*.ts",
-          ],
+          allowDefaultProject: ["packages/interface/tsup.config.ts", "apps/api/test/*.ts"],
         },
         tsconfigRootDir: import.meta.dirname,
       },

@@ -104,11 +104,13 @@ The configuration targets server-side module testing under a `node` environment,
 - **Change**: In `compilerOptions.types`, add `"vitest/globals"` alongside the existing `"node"` and `"vite/client"` entries.
 
   Before:
+
   ```json
   "types": ["node", "vite/client"]
   ```
 
   After:
+
   ```json
   "types": ["node", "vite/client", "vitest/globals"]
   ```
@@ -385,6 +387,7 @@ The project's `tsconfig.json` enables `exactOptionalPropertyTypes` and `noUnchec
 **Downstream contract for Tasks 5–9**
 
 Every unit test file created in Tasks 5 through 9 must:
+
 - Be placed under `app/` with a `.test.ts` extension.
 - Not import `it`, `describe`, or `expect` from `vitest` — globals are available without imports.
 - Use `import type` for any type-only imports (ESLint `consistent-type-imports` rule enforces this).
