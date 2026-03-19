@@ -37,7 +37,7 @@ because `OPENAI_API_KEY` is a server-only variable — it is never accessed thro
 ### Dependencies and Constraints
 
 - **Internal**: No other task depends on this task. Tasks 8 and 10 depend on the
-  *local `.env`* file that a developer creates by following these instructions, not
+  _local `.env`_ file that a developer creates by following these instructions, not
   on `.env.example` itself.
 - **External**: None.
 - **Constraints**:
@@ -66,6 +66,7 @@ because `OPENAI_API_KEY` is a server-only variable — it is never accessed thro
   VITE_SENTRY_DSN=
   ```
 - **New content**:
+
   ```env
   # Sentry DSN for error tracking
   VITE_SENTRY_DSN=
@@ -77,16 +78,17 @@ because `OPENAI_API_KEY` is a server-only variable — it is never accessed thro
   # Get your API key from: https://platform.openai.com/api-keys
   OPENAI_API_KEY=sk-...
   ```
+
 - **Key considerations**:
   - `sk-...` is a recognisable placeholder that mimics the shape of a real OpenAI
     key without containing any valid characters that could be silently accepted.
-  - The comment block explains the VITE_ prefix absence inline, so any developer
-    who wonders "why no VITE_?" gets the answer without leaving the file.
+  - The comment block explains the VITE* prefix absence inline, so any developer
+    who wonders "why no VITE*?" gets the answer without leaving the file.
   - A blank line separates the two variable groups for visual clarity.
 - **Acceptance criteria**:
   - `cat .env.example` shows both variables with comments.
   - `grep OPENAI_API_KEY .env.example` returns the documented line.
-  - `grep VITE_OPENAI .env.example` returns nothing (no accidental VITE_ prefix).
+  - `grep VITE_OPENAI .env.example` returns nothing (no accidental VITE\_ prefix).
 
 #### Subtask 1.2: Verify `.gitignore` covers `.env`
 
@@ -168,9 +170,9 @@ cp .env.example .env
 ```typescript
 // app/lib/openai/client.ts  (Task 8)
 // Correct: bracket notation required by noPropertyAccessFromIndexSignature
-const apiKey = process.env['OPENAI_API_KEY'];
+const apiKey = process.env["OPENAI_API_KEY"];
 if (!apiKey) {
-  throw new Error('OPENAI_API_KEY is not set');
+  throw new Error("OPENAI_API_KEY is not set");
 }
 ```
 
@@ -178,6 +180,7 @@ if (!apiKey) {
 module, Task 10 route action).
 
 **Why this pattern**:
+
 - `tsconfig.json` sets `noPropertyAccessFromIndexSignature: true`, which disallows
   `process.env.OPENAI_API_KEY` — bracket notation is required.
 - The explicit undefined-guard converts `string | undefined` to `string` without

@@ -268,6 +268,7 @@ Not applicable for this task.
 
 **Downstream contract for Task 2 (Configure Vitest)**:
 Vitest 4 removed `poolOptions` as a configuration namespace and `coverage.all`. Task 2's `vitest.config.ts` must:
+
 - Use `coverage.include: ['app/lib/**/*.ts']` (not `coverage.all: true`)
 - Not reference `poolOptions` at the top level
 - Reference the `mergeConfig` import from `'vitest/config'` (not `'vite'`)

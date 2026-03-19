@@ -167,6 +167,7 @@ export default defineConfig({
 **Where to apply**: `playwright.config.ts` at the project root
 
 **Why this pattern**:
+
 - `defineConfig` provides full TypeScript inference for all options — no `satisfies` or manual type annotations needed
 - `process.env['CI']` uses bracket notation to satisfy `noPropertyAccessFromIndexSignature`
 - `!!process.env['CI']` coerces the string `"true"` (or any truthy value) to a boolean for `forbidOnly`, which expects `boolean`
@@ -195,30 +196,35 @@ test("home page loads", async ({ page }) => {
 ### E2E Tests
 
 **Test 1 (smoke — temporary)**: Home page loads over Chromium
+
 - **Given**: The dev server is not running; `CI` environment variable is unset (local run)
 - **When**: `pnpm test:e2e` is executed
 - **Then**: `webServer` starts `pnpm dev`, the browser navigates to `http://localhost:5173/`, the page title is non-empty, and the test passes with exit code 0
 - **Coverage**: Validates the full config → server bootstrap → browser launch → navigation pipeline
 
 **Test 2 (smoke — temporary)**: Playwright UI opens correctly
+
 - **Given**: `pnpm dev` is already running on port 5173
 - **When**: `pnpm test:e2e:ui` is executed
 - **Then**: The Playwright UI window opens, the smoke test appears in the test tree, and clicking "Run" executes it successfully (server is reused, not restarted)
 - **Coverage**: Validates `reuseExistingServer: true` and `--ui` mode compatibility
 
 **Test 3 (config validation)**: `forbidOnly` blocks committed `.only` calls in CI
+
 - **Given**: `e2e/smoke.spec.ts` contains `test.only(...)` and `CI=true` is set
 - **When**: `playwright test` is invoked
 - **Then**: The process exits with a non-zero code and an error message referencing `forbidOnly`
 - **Coverage**: Confirms the `forbidOnly` setting is active and correctly read from the environment
 
 **Test 4 (config validation)**: TypeScript compilation passes
+
 - **Given**: `playwright.config.ts` is written as specified
 - **When**: `pnpm type-check` is executed
 - **Then**: `tsc --noEmit` exits with code 0 and no diagnostic errors
 - **Coverage**: Detects any type-strict violation in the config (e.g., wrong type for `workers`, missing bracket notation for `process.env`)
 
 **Test 5 (config validation)**: ESLint passes on the config file
+
 - **Given**: `playwright.config.ts` is written as specified
 - **When**: `pnpm exec eslint playwright.config.ts` is executed
 - **Then**: Zero errors or warnings are reported

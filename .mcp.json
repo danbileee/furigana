@@ -1,33 +1,24 @@
 {
-	"mcpServers": {
-		"playwright": {
-			"type": "stdio",
-			"command": "pnpx",
-			"args": [
-				"@playwright/mcp@latest",
-				"--browser",
-				"chromium"
-			],
-			"env": {}
-		},
-		"context7": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"@upstash/context7-mcp@latest"
-			],
-			"env": {}
-		},
-		"task-master-ai": {
-			"type": "stdio",
-			"command": "npx",
-			"args": [
-				"-y",
-				"task-master-ai"
-			],
-			"env": {
-				"TASK_MASTER_TOOLS": "standard"
-			}
-		}
-	}
+  "mcpServers": {
+    "playwright": {
+      "type": "stdio",
+      "command": "pnpx",
+      "args": ["@playwright/mcp@latest", "--browser", "chromium"],
+      "env": {}
+    },
+    "context7": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["@upstash/context7-mcp@latest"],
+      "env": {}
+    },
+    "task-master-ai": {
+      "type": "stdio",
+      "command": "npx",
+      "args": ["-y", "task-master-ai"],
+      "env": {
+        "TASK_MASTER_TOOLS": "standard"
+      }
+    }
+  }
 }
