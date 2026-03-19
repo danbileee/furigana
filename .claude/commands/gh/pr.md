@@ -51,13 +51,10 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
    - [Change 2]
    - [Change 3]
 
-   ## Type of Change
-   - [ ] Feature
-   - [ ] Bug fix
-   - [ ] Refactor
-   - [ ] Chore
-   - [ ] Documentation
-   - [ ] Test
+   ## Checklists
+   - [] [Checklist 1]
+   - [] [Checklist 2]
+   - [] [Checklist 3]
 
    ## Test Plan
    [Steps to verify the changes work as intended, or "N/A" if no manual testing needed]
@@ -68,6 +65,9 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
    - **Changes**: Extract 3–5 meaningful bullet points from the commits and diff (focus on what changed, not file names)
    - **Type of Change**: Check the boxes that apply based on commit types (feat → Feature, fix → Bug fix, etc.)
    - **Test Plan**: Infer from the changes what a reviewer should test. If it's a chore/docs-only PR, write "N/A"
+   - **Assignee**: Always set to `danbileee` (the project author)
+   - **Base branch**: Prefer the latest `release/*` remote branch; fall back to the repo default branch if none exists
+   - **Ensure commits exist**: If the current branch has no commits ahead of the base, inform the user and stop
 
 6. **Present and confirm**: Display the proposed PR title and body to the user in a clear format. Wait for confirmation before proceeding (the user should have a chance to edit the title or body).
 
@@ -78,9 +78,3 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
    ```
 
 8. **Output the result**: Display the PR URL from the command output so the user can open it in their browser.
-
-## Notes
-
-- **Reviewer**: Always set to `danbileee` (the project author)
-- **Base branch**: Prefer the latest `release/*` remote branch; fall back to the repo default branch if none exists
-- **Ensure commits exist**: If the current branch has no commits ahead of the base, inform the user and stop
