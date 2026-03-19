@@ -53,13 +53,13 @@ describe("RubyTokenSchema", () => {
     const result = RubyTokenSchema.parse({
       type: "ruby",
       kanji: "東京",
-      reading: "とうきょう",
+      yomi: "とうきょう",
     });
 
     expect(result).toEqual({
       type: "ruby",
       kanji: "東京",
-      reading: "とうきょう",
+      yomi: "とうきょう",
     });
   });
 
@@ -67,17 +67,17 @@ describe("RubyTokenSchema", () => {
     const result = RubyTokenSchema.safeParse({
       type: "ruby",
       kanji: "",
-      reading: "とうきょう",
+      yomi: "とうきょう",
     });
 
     expect(result.success).toBe(false);
   });
 
-  it("rejects empty reading", () => {
+  it("rejects empty yomi", () => {
     const result = RubyTokenSchema.safeParse({
       type: "ruby",
       kanji: "東京",
-      reading: "",
+      yomi: "",
     });
 
     expect(result.success).toBe(false);
@@ -95,10 +95,10 @@ describe("FuriganaTokenSchema", () => {
     const result = FuriganaTokenSchema.parse({
       type: "ruby",
       kanji: "行",
-      reading: "い",
+      yomi: "い",
     });
 
-    expect(result).toEqual({ type: "ruby", kanji: "行", reading: "い" });
+    expect(result).toEqual({ type: "ruby", kanji: "行", yomi: "い" });
   });
 
   it("rejects unknown type values", () => {
@@ -129,7 +129,7 @@ describe("type guards", () => {
     const token: FuriganaToken = {
       type: "ruby",
       kanji: "漢字",
-      reading: "かんじ",
+      yomi: "かんじ",
     };
 
     expect(isRubyToken(token)).toBe(true);
