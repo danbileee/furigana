@@ -196,16 +196,22 @@ Generate a markdown document with the following structure:
 
 ## Workflow
 
-1. **Request Clarification**: If the milestone PRD or task config lacks clarity, ask specific questions before proceeding.
+1. **Set Task Status to In-Progress**: Before any other action, update the task status to `in-progress` using the task-master command:
+   ```bash
+   task-master set-status --id=<task-id> --status=in-progress
+   ```
+   The task ID comes from the task configuration provided by the user. If no task ID is supplied, ask for it before proceeding.
 
-2. **Analyze the Existing Codebase**: Before generating the plan, explore the codebase to:
+2. **Request Clarification**: If the milestone PRD or task config lacks clarity, ask specific questions before proceeding.
+
+3. **Analyze the Existing Codebase**: Before generating the plan, explore the codebase to:
    - Identify existing utilities, hooks, components, and patterns relevant to the task
    - Note conventions (file naming, folder structure, type patterns, error handling)
    - Flag any places where similar functionality already exists that could be extended
 
    Apply findings to override or refine any conflicting guidance in the PRD.
 
-3. **Research Third-Party Integrations**: Before generating the plan, identify every external library and API the task will touch. For each one, use `WebSearch` and `WebFetch` to pull:
+4. **Research Third-Party Integrations**: Before generating the plan, identify every external library and API the task will touch. For each one, use `WebSearch` and `WebFetch` to pull:
    - Latest official documentation and changelog
    - Open GitHub issues or community reports relevant to the feature
    - Security advisories and CVEs
@@ -214,11 +220,11 @@ Generate a markdown document with the following structure:
 
    Populate the **Third-Party Integration Research** section. Apply `> ⚠️ **Needs Review**` callouts for any finding that could block implementation or introduces risk. Only proceed to plan generation after this research is complete.
 
-4. **Ask for Date Flag**: Before generating the plan, explicitly ask the user for the **date flag** (e.g., `2026-03-17`) that will be used to match against directory names under `.taskmaster/docs/plans/`. Explain that the actual directory may have a suffix (e.g., `2026-03-17 MVP`).
+5. **Ask for Date Flag**: Before generating the plan, explicitly ask the user for the **date flag** (e.g., `2026-03-17`) that will be used to match against directory names under `.taskmaster/docs/plans/`. Explain that the actual directory may have a suffix (e.g., `2026-03-17 MVP`).
 
-5. **Generate the Plan**: Create the comprehensive markdown document following the template above.
+6. **Generate the Plan**: Create the comprehensive markdown document following the template above.
 
-6. **Thorough Review**: Before finalizing, review the entire document to:
+7. **Thorough Review**: Before finalizing, review the entire document to:
    - Check for consistency in terminology and naming
    - Ensure all requirements are addressed
    - Verify test cases are meaningful and comprehensive
@@ -227,7 +233,7 @@ Generate a markdown document with the following structure:
    - Validate that type strictness rules are maintained
    - Confirm all `Needs Review` items are clearly described with actionable next steps
 
-7. **Save to Correct Location**: Once the user provides the date flag, locate the matching directory under `.taskmaster/docs/plans/` (accounting for suffixes), and save the output to `{matching-directory}/milestones/{milestone-number}-task-{task-number}-{Task-Name}.md`.
+8. **Save to Correct Location**: Once the user provides the date flag, locate the matching directory under `.taskmaster/docs/plans/` (accounting for suffixes), and save the output to `{matching-directory}/milestones/{milestone-number}-task-{task-number}-{Task-Name}.md`.
 
 ## Chain-of-Thought Reasoning
 

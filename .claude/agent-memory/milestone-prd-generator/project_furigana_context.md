@@ -9,15 +9,16 @@ Furigana MVP is a React Router v7 SSR single-page app that generates furigana (r
 **Architecture**: Textarea input → server-side `action` → GPT-4o-mini API → `漢字{よみ}` annotation string → parser → `FuriganaToken[]` → `<ruby>` JSX rendering.
 
 **Milestone sequencing** (8 milestones total):
+
 1. Core Generation Loop (weight 0.23) — annotation string parser, ruby rendering, no persistence
 2. Sanity Storage and History Sidebar (weight 0.22) — persistence, sidebar component
 3. View Mode Toggle and Preference Persistence (weight 0.08) — Always/On Hover CSS toggle
 4. AI Title Generation (weight 0.10) — background useFetcher title call
 5. Inline Title Editing — double-click sidebar row
 6. Soft-Delete and Trash Menu — trash store, restore flow
-7a. Relative Timestamps — formatTimestamp utility
-7b. Session Persistence — last-viewed entry on reload
-8. Mobile Sidebar Drawer — hamburger + drawer overlay
+   7a. Relative Timestamps — formatTimestamp utility
+   7b. Session Persistence — last-viewed entry on reload
+7. Mobile Sidebar Drawer — hamburger + drawer overlay
 
 **Master PRD**: `docs/plans/2026-03-17/prd.md`
 **Roadmap**: `docs/plans/2026-03-17/roadmap.md`

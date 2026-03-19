@@ -33,6 +33,7 @@ Review the diff and determine whether the following files need updating:
 - `.claude/CLAUDE.md` — update if new tools, conventions, workflow rules, or project patterns have been introduced
 
 For each file:
+
 - Read the current content
 - Compare against what has changed in the local commits
 - If the file is outdated or missing information, update it to reflect the current state of the project
