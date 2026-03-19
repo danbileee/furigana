@@ -10,9 +10,7 @@ import * as z from "zod";
  */
 export const TextTokenSchema = z.object({
   type: z.literal("text").readonly(),
-  value: z
-    .string()
-    .regex(/^(?:[^{}])*$/, "TextToken value must not contain {…} placeholders"),
+  value: z.string().regex(/^(?:[^{}])*$/, "TextToken value must not contain {…} placeholders"),
 });
 
 /**
@@ -21,17 +19,14 @@ export const TextTokenSchema = z.object({
 export const RubyTokenSchema = z.object({
   type: z.literal("ruby").readonly(),
   kanji: z.string().min(1),
-  reading: z.string().min(1),
+  yomi: z.string().min(1),
 });
 
 /**
  * Discriminated union schema for all token types in parsed furigana output.
  * The discriminant is the `type` field.
  */
-export const FuriganaTokenSchema = z.discriminatedUnion("type", [
-  TextTokenSchema,
-  RubyTokenSchema,
-]);
+export const FuriganaTokenSchema = z.discriminatedUnion("type", [TextTokenSchema, RubyTokenSchema]);
 
 /**
  * TypeScript type for a plain text segment, derived from TextTokenSchema.
