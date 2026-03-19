@@ -16,5 +16,6 @@ Files already generated:
 - `1-task-1-Install-Development-Dependencies.md` — Task 1 implementation plan
 - `1-task-5-Define-FuriganaToken-Types.md` — Task 5 implementation plan
 - `1-task-6-Implement-Annotation-String-Parser.md` — Task 6 implementation plan
+- `1-task-7-Write-Parser-Unit-Tests.md` — Task 7 implementation plan
 
 The date flag pattern is `2026-03-17` and the full directory name is `2026-03-17 MVP`.
