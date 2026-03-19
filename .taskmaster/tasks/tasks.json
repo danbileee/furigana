@@ -20,7 +20,9 @@
         "details": "Create `vitest.config.ts` in the project root. Vitest 4.1 works seamlessly with Vite 7.x and automatically uses the installed Vite version.\n\n```typescript\n// vitest.config.ts\nimport { defineConfig, mergeConfig } from 'vitest/config';\nimport viteConfig from './vite.config';\n\nexport default mergeConfig(\n  viteConfig,\n  defineConfig({\n    test: {\n      globals: true,\n      environment: 'node',\n      include: ['app/**/*.test.ts'],\n      exclude: ['e2e/**/*'],\n      coverage: {\n        provider: 'v8',\n        reporter: ['text', 'json', 'html'],\n        include: ['app/lib/**/*.ts'],\n        exclude: ['**/*.test.ts', '**/*.d.ts'],\n      },\n    },\n  }),\n);\n```\n\nAdd `vitest/globals` types to tsconfig.json:\n```json\n{\n  \"compilerOptions\": {\n    \"types\": [\"node\", \"vite/client\", \"vitest/globals\"]\n  }\n}\n```\n\nNote: Vitest 4.x removed poolOptions as top-level options. Environment should be 'node' for server-side module tests.",
         "testStrategy": "Run `pnpm test` to verify Vitest starts successfully. Create a simple test file `app/lib/__test__.ts` with `it('works', () => expect(true).toBe(true))` to confirm the setup. Remove the test file after verification.",
         "priority": "high",
-        "dependencies": ["1"],
+        "dependencies": [
+          "1"
+        ],
         "status": "done",
         "subtasks": [],
         "updatedAt": "2026-03-18T11:25:29.503Z"
@@ -32,7 +34,9 @@
         "details": "Create `playwright.config.ts` in the project root:\n\n```typescript\n// playwright.config.ts\nimport { defineConfig, devices } from '@playwright/test';\n\nexport default defineConfig({\n  testDir: './e2e',\n  fullyParallel: true,\n  forbidOnly: !!process.env['CI'],\n  retries: process.env['CI'] ? 2 : 0,\n  workers: process.env['CI'] ? 1 : undefined,\n  reporter: 'html',\n  use: {\n    baseURL: 'http://localhost:5173',\n    trace: 'on-first-retry',\n  },\n  projects: [\n    {\n      name: 'chromium',\n      use: { ...devices['Desktop Chrome'] },\n    },\n  ],\n  webServer: {\n    command: 'pnpm dev',\n    url: 'http://localhost:5173',\n    reuseExistingServer: !process.env['CI'],\n  },\n});\n```\n\nCreate the `e2e/` directory structure:\n```\ne2e/\n└── .gitkeep\n```\n\nPlaywright 1.57+ runs on Chrome for Testing builds. The webServer config automatically starts the dev server before tests.",
         "testStrategy": "Run `pnpm test:e2e --ui` to verify Playwright opens correctly. Create a minimal `e2e/smoke.spec.ts` test that navigates to '/' and asserts the page loads. Delete after verification.",
         "priority": "high",
-        "dependencies": ["1"],
+        "dependencies": [
+          "1"
+        ],
         "status": "done",
         "subtasks": [],
         "updatedAt": "2026-03-18T11:42:57.530Z"
@@ -57,8 +61,9 @@
         "testStrategy": "Run `pnpm type-check` to ensure the types compile without errors. Import types in a test file and verify type guards work correctly with TypeScript's narrowing.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "done",
+        "subtasks": [],
+        "updatedAt": "2026-03-19T06:32:30.987Z"
       },
       {
         "id": "6",
@@ -67,7 +72,9 @@
         "details": "Create `app/lib/furigana/parser.ts`:\n\n```typescript\n// app/lib/furigana/parser.ts\nimport type { FuriganaToken } from './types';\n\n/**\n * Parses an annotation string in the format \"漢字{よみ}\" into a typed token array.\n * \n * Algorithm:\n * 1. Iterate through the string character by character\n * 2. Accumulate characters until encountering '{'\n * 3. On '{': extract preceding kanji (non-brace chars since last token), start reading accumulator\n * 4. On '}': create RubyToken from kanji + reading, reset accumulators\n * 5. Handle malformed input gracefully (unclosed braces become text)\n */\nexport function parseAnnotationString(input: string): FuriganaToken[] {\n  const tokens: FuriganaToken[] = [];\n  let textBuffer = '';\n  let readingBuffer = '';\n  let insideBraces = false;\n  let kanjiStart = 0;\n\n  for (let i = 0; i < input.length; i++) {\n    const char = input[i];\n    if (char === undefined) continue; // noUncheckedIndexedAccess guard\n\n    if (char === '{' && !insideBraces) {\n      insideBraces = true;\n      // Find where the kanji starts (after last token or start)\n      // All text before '{' that hasn't been tokenized yet is the kanji\n      kanjiStart = textBuffer.length;\n      continue;\n    }\n\n    if (char === '}' && insideBraces) {\n      insideBraces = false;\n      // Extract kanji from the end of textBuffer\n      const kanji = textBuffer.slice(kanjiStart);\n      const precedingText = textBuffer.slice(0, kanjiStart);\n      \n      if (precedingText) {\n        tokens.push({ type: 'text', value: precedingText });\n      }\n      \n      if (kanji || readingBuffer) {\n        tokens.push({ type: 'ruby', kanji, reading: readingBuffer });\n      }\n      \n      textBuffer = '';\n      readingBuffer = '';\n      kanjiStart = 0;\n      continue;\n    }\n\n    if (insideBraces) {\n      readingBuffer += char;\n    } else {\n      textBuffer += char;\n    }\n  }\n\n  // Handle unclosed braces - treat as plain text\n  if (insideBraces) {\n    textBuffer += '{' + readingBuffer;\n  }\n\n  // Flush remaining text buffer\n  if (textBuffer) {\n    tokens.push({ type: 'text', value: textBuffer });\n  }\n\n  return tokens;\n}\n```\n\nKey implementation notes:\n- Uses character-by-character iteration (handles `noUncheckedIndexedAccess`)\n- Never throws on malformed input\n- Unclosed `{` treated as literal text\n- Empty readings produce RubyToken with empty `reading` string\n- No HTML in output - pure string values only",
         "testStrategy": "Create comprehensive unit tests in `app/lib/furigana/parser.test.ts` covering all edge cases from the PRD: single kanji, multiple consecutive ruby tokens, pure hiragana, pure romaji, empty string, unclosed braces, nested braces, empty reading braces. Target 100% line coverage.",
         "priority": "high",
-        "dependencies": ["5"],
+        "dependencies": [
+          "5"
+        ],
         "status": "pending",
         "subtasks": []
       },
@@ -78,7 +85,10 @@
         "details": "Create `app/lib/furigana/parser.test.ts`:\n\n```typescript\nimport { describe, it, expect } from 'vitest';\nimport { parseAnnotationString } from './parser';\n\ndescribe('parseAnnotationString', () => {\n  it('parses a single kanji compound with reading', () => {\n    const result = parseAnnotationString('日本語{にほんご}');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: '日本語', reading: 'にほんご' },\n    ]);\n  });\n\n  it('parses kanji in the middle of hiragana text', () => {\n    const result = parseAnnotationString('行{い}きました');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: '行', reading: 'い' },\n      { type: 'text', value: 'きました' },\n    ]);\n  });\n\n  it('parses multiple consecutive ruby tokens', () => {\n    const result = parseAnnotationString('東京{とうきょう}に行{い}きました');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: '東京', reading: 'とうきょう' },\n      { type: 'text', value: 'に' },\n      { type: 'ruby', kanji: '行', reading: 'い' },\n      { type: 'text', value: 'きました' },\n    ]);\n  });\n\n  it('parses text with mixed kanji, hiragana, and punctuation', () => {\n    const result = parseAnnotationString('東京{とうきょう}は元気{げんき}？');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: '東京', reading: 'とうきょう' },\n      { type: 'text', value: 'は' },\n      { type: 'ruby', kanji: '元気', reading: 'げんき' },\n      { type: 'text', value: '？' },\n    ]);\n  });\n\n  it('returns a single text token for pure hiragana input', () => {\n    const result = parseAnnotationString('こんにちは');\n    expect(result).toEqual([{ type: 'text', value: 'こんにちは' }]);\n  });\n\n  it('returns a single text token for pure romaji input', () => {\n    const result = parseAnnotationString('Hello world');\n    expect(result).toEqual([{ type: 'text', value: 'Hello world' }]);\n  });\n\n  it('returns an empty array for empty string input', () => {\n    const result = parseAnnotationString('');\n    expect(result).toEqual([]);\n  });\n\n  it('handles consecutive ruby tokens with no text between them', () => {\n    const result = parseAnnotationString('漢字{かんじ}漢字{かんじ}');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: '漢字', reading: 'かんじ' },\n      { type: 'ruby', kanji: '漢字', reading: 'かんじ' },\n    ]);\n  });\n\n  it('handles unclosed opening brace - treats as text', () => {\n    const result = parseAnnotationString('unclosed{');\n    expect(result).toEqual([{ type: 'text', value: 'unclosed{' }]);\n  });\n\n  it('handles nested braces - does not crash', () => {\n    const result = parseAnnotationString('bad{nested{braces}}');\n    // Implementation-defined behavior: should not crash\n    expect(result).toBeDefined();\n    expect(Array.isArray(result)).toBe(true);\n  });\n\n  it('handles empty reading braces {}', () => {\n    const result = parseAnnotationString('text{}');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: 'text', reading: '' },\n    ]);\n  });\n\n  it('handles input that is only braces {}', () => {\n    const result = parseAnnotationString('{}');\n    expect(result).toEqual([{ type: 'ruby', kanji: '', reading: '' }]);\n  });\n\n  it('handles multi-character readings', () => {\n    const result = parseAnnotationString('勉強{べんきょう}');\n    expect(result).toEqual([\n      { type: 'ruby', kanji: '勉強', reading: 'べんきょう' },\n    ]);\n  });\n\n  it('produces no HTML in token values', () => {\n    const result = parseAnnotationString('<script>{alert}</script>');\n    result.forEach(token => {\n      if (token.type === 'text') {\n        expect(token.value).not.toContain('<script>');\n      }\n    });\n  });\n});\n```\n\nRun with: `pnpm test app/lib/furigana/parser.test.ts --coverage`",
         "testStrategy": "Run `pnpm test:coverage` and verify 100% line coverage for parser.ts. All 14 test cases must pass. Review coverage report in coverage/index.html.",
         "priority": "high",
-        "dependencies": ["2", "6"],
+        "dependencies": [
+          "2",
+          "6"
+        ],
         "status": "pending",
         "subtasks": []
       },
@@ -89,7 +99,10 @@
         "details": "Create `app/lib/ai/client.ts`:\n\n```typescript\n// app/lib/ai/client.ts\n// Server-only — do not import from client-side modules\n\nimport OpenAI from 'openai';\n\nconst apiKey = process.env['OPENAI_API_KEY'];\n\nif (!apiKey) {\n  throw new Error(\n    'OPENAI_API_KEY environment variable is required. ' +\n    'Set it in your .env file or environment.',\n  );\n}\n\n/**\n * Pre-configured OpenAI client instance for server-side use only.\n * Uses GPT-4o-mini for furigana generation.\n */\nexport const openaiClient = new OpenAI({ apiKey });\n```\n\nKey implementation notes:\n- Uses bracket notation `process.env['OPENAI_API_KEY']` to satisfy `noPropertyAccessFromIndexSignature`\n- Throws at module import time if key is missing (fail-fast pattern)\n- No VITE_ prefix ensures this is server-only\n- OpenAI SDK v6.31.0 auto-types responses; no `as` casts needed\n- This module must NEVER be imported in client-side code (routes/*.tsx client portions, entry.client.tsx)\n\nThe module should be placed in `app/lib/ai/` which is a server-accessible path in React Router's SSR architecture.",
         "testStrategy": "Integration test: Mock the openaiClient in route action tests. Unit test: Verify the module throws when OPENAI_API_KEY is unset by temporarily removing it from test environment.",
         "priority": "high",
-        "dependencies": ["1", "4"],
+        "dependencies": [
+          "1",
+          "4"
+        ],
         "status": "pending",
         "subtasks": []
       },
@@ -111,7 +124,11 @@
         "details": "Rewrite `app/routes/home.tsx` action function:\n\n```typescript\n// app/routes/home.tsx\nimport type { Route } from './+types/home';\nimport { openaiClient } from '~/lib/ai/client';\nimport { FURIGANA_SYSTEM_PROMPT, buildUserMessage } from '~/lib/ai/prompts';\nimport { parseAnnotationString } from '~/lib/furigana/parser';\nimport type { FuriganaToken } from '~/lib/furigana/types';\n\n// Action return types\nexport type ActionSuccess = {\n  tokens: FuriganaToken[];\n};\n\nexport type ActionError = {\n  error: string;\n  originalText: string;\n};\n\nexport type ActionData = ActionSuccess | ActionError;\n\nconst MAX_CHARACTERS = 10000;\n\nexport async function action({ request }: Route.ActionArgs): Promise<ActionData> {\n  const formData = await request.formData();\n  const textEntry = formData.get('text');\n\n  // Validate input\n  if (typeof textEntry !== 'string' || textEntry.length === 0) {\n    return {\n      error: 'Please enter some Japanese text.',\n      originalText: '',\n    };\n  }\n\n  if (textEntry.length > MAX_CHARACTERS) {\n    return {\n      error: `Text exceeds ${MAX_CHARACTERS} character limit.`,\n      originalText: textEntry,\n    };\n  }\n\n  try {\n    const completion = await openaiClient.chat.completions.create({\n      model: 'gpt-4o-mini',\n      messages: [\n        { role: 'system', content: FURIGANA_SYSTEM_PROMPT },\n        { role: 'user', content: buildUserMessage(textEntry) },\n      ],\n      temperature: 0.3,\n      max_tokens: textEntry.length * 3, // Accommodate readings\n    });\n\n    const annotationString = completion.choices[0]?.message?.content ?? '';\n\n    if (!annotationString) {\n      return {\n        error: 'Something went wrong. Please try again.',\n        originalText: textEntry,\n      };\n    }\n\n    const tokens = parseAnnotationString(annotationString);\n\n    return { tokens };\n  } catch (error) {\n    console.error('OpenAI API error:', error);\n    return {\n      error: 'Something went wrong. Please try again.',\n      originalText: textEntry,\n    };\n  }\n}\n```\n\nKey implementation notes:\n- Uses `noUncheckedIndexedAccess`-safe access with optional chaining\n- Generic error message to user; raw error logged server-side\n- `temperature: 0.3` for consistent output format\n- Returns parsed tokens, not raw annotationString (keeps parsing server-side)\n- MAX_CHARACTERS constant for reuse",
         "testStrategy": "Create `app/routes/home.test.ts` with mocked openaiClient. Test cases: valid response returns tokens, API error returns error with originalText, empty text returns error, over-limit text returns error.",
         "priority": "high",
-        "dependencies": ["6", "8", "9"],
+        "dependencies": [
+          "6",
+          "8",
+          "9"
+        ],
         "status": "pending",
         "subtasks": []
       },
@@ -133,7 +150,9 @@
         "details": "Create `app/components/furigana/ReadingView.tsx`:\n\n```typescript\n// app/components/furigana/ReadingView.tsx\nimport type { FuriganaToken } from '~/lib/furigana/types';\n\ntype ReadingViewProps = {\n  tokens: FuriganaToken[];\n};\n\nexport function ReadingView({ tokens }: ReadingViewProps) {\n  return (\n    <article className=\"reading-view text-lg leading-[2.5] tracking-wide\">\n      {tokens.map((token, index) =>\n        token.type === 'ruby' ? (\n          <ruby key={index}>\n            {token.kanji}\n            <rp>(</rp>\n            <rt>{token.reading}</rt>\n            <rp>)</rp>\n          </ruby>\n        ) : (\n          <span key={index}>{token.value}</span>\n        ),\n      )}\n    </article>\n  );\n}\n```\n\nKey implementation notes:\n- Uses semantic `<ruby>`, `<rt>`, `<rp>` elements (native HTML5)\n- `<rp>` provides fallback parentheses for browsers without ruby support\n- Token values are JSX interpolated (auto-escaped by React)\n- NO `dangerouslySetInnerHTML` - completely XSS-safe\n- Index-based keys are acceptable (array is immutable once rendered)\n- `leading-[2.5]` provides generous line-height for ruby text\n- Designed for future `viewMode` prop addition (Milestone 3)\n\nCSS class `reading-view` can be used for additional styling hooks.",
         "testStrategy": "Visual testing: render component with sample tokens, verify ruby text appears above kanji. Verify pure-text input renders without ruby elements. Check browser DevTools for correct HTML structure.",
         "priority": "medium",
-        "dependencies": ["5"],
+        "dependencies": [
+          "5"
+        ],
         "status": "pending",
         "subtasks": []
       },
@@ -155,7 +174,11 @@
         "details": "Complete `app/routes/home.tsx` component:\n\n```typescript\n// app/routes/home.tsx (component portion)\nimport { useState, useRef, useEffect } from 'react';\nimport { Form, useNavigation, useActionData } from 'react-router';\nimport { Loader2 } from 'lucide-react';\nimport type { Route } from './+types/home';\nimport { Button } from '~/components/ui/button';\nimport { InputArea } from '~/components/furigana/InputArea';\nimport { ReadingView } from '~/components/furigana/ReadingView';\nimport type { ActionData } from './home'; // Import from same file\n\nconst MAX_CHARACTERS = 10000;\n\nexport function meta(_: Route.MetaArgs) {\n  return [\n    { title: 'Furigana - AI Japanese Reading Assistant' },\n    { name: 'description', content: 'Add furigana readings to Japanese text with AI' },\n  ];\n}\n\nexport default function Home() {\n  const actionData = useActionData<ActionData>();\n  const navigation = useNavigation();\n  const formRef = useRef<HTMLFormElement>(null);\n  \n  const isSubmitting = navigation.state === 'submitting';\n  const hasTokens = actionData !== undefined && 'tokens' in actionData;\n  const hasError = actionData !== undefined && 'error' in actionData;\n\n  // Initialize text from error response to preserve user input\n  const [text, setText] = useState(() => {\n    if (hasError && actionData.originalText) {\n      return actionData.originalText;\n    }\n    return '';\n  });\n\n  // Update text when error response changes (handles remount edge case)\n  useEffect(() => {\n    if (hasError && actionData.originalText) {\n      setText(actionData.originalText);\n    }\n  }, [hasError, actionData]);\n\n  const isOverLimit = text.length > MAX_CHARACTERS;\n  const isEmpty = text.length === 0;\n  const isSubmitDisabled = isSubmitting || isEmpty || isOverLimit;\n\n  // Show ReadingView on success, InputArea otherwise\n  if (hasTokens) {\n    return (\n      <main className=\"mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 p-8\">\n        <h1 className=\"text-3xl font-bold\">Furigana</h1>\n        <ReadingView tokens={actionData.tokens} />\n      </main>\n    );\n  }\n\n  return (\n    <main className=\"mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 p-8\">\n      <h1 className=\"text-3xl font-bold\">Furigana</h1>\n      <p className=\"text-center text-muted-foreground\">\n        Paste Japanese text and get furigana readings instantly\n      </p>\n\n      <Form ref={formRef} method=\"post\" className=\"flex w-full flex-col gap-4\">\n        <InputArea\n          value={text}\n          onChange={setText}\n          disabled={isSubmitting}\n          formRef={formRef}\n        />\n\n        {hasError && (\n          <p role=\"alert\" className=\"text-sm text-destructive\">\n            {actionData.error}\n          </p>\n        )}\n\n        <Button type=\"submit\" disabled={isSubmitDisabled} className=\"w-full\">\n          {isSubmitting ? (\n            <>\n              <Loader2 className=\"animate-spin\" />\n              Generating...\n            </>\n          ) : (\n            'Generate Furigana'\n          )}\n        </Button>\n      </Form>\n    </main>\n  );\n}\n```\n\nKey implementation notes:\n- Uses React Router's Form component for progressive enhancement\n- useNavigation().state for loading state (idiomatic RR7)\n- Error message has role=\"alert\" for accessibility\n- Text state preserved on error via useEffect\n- Lucide Loader2 icon with animate-spin for spinner",
         "testStrategy": "Manual testing: paste text, submit, verify loading state, verify ReadingView displays. Test error path by disconnecting network. Verify Cmd+Enter shortcut works.",
         "priority": "high",
-        "dependencies": ["10", "11", "12"],
+        "dependencies": [
+          "10",
+          "11",
+          "12"
+        ],
         "status": "pending",
         "subtasks": []
       },
@@ -166,17 +189,22 @@
         "details": "Create `e2e/home.spec.ts`:\n\n```typescript\nimport { test, expect } from '@playwright/test';\n\ntest.describe('Furigana Generation', () => {\n  test('generates furigana for valid Japanese input', async ({ page }) => {\n    await page.goto('/');\n\n    // Fill textarea with Japanese text\n    const textarea = page.getByRole('textbox', { name: /japanese text/i });\n    await textarea.fill('日本語を勉強しています');\n\n    // Submit the form\n    await page.getByRole('button', { name: /generate furigana/i }).click();\n\n    // Wait for loading to complete and ReadingView to appear\n    await expect(page.locator('ruby')).toBeVisible({ timeout: 30000 });\n\n    // Verify ruby elements exist with correct structure\n    const rubyElements = page.locator('ruby');\n    await expect(rubyElements.first()).toBeVisible();\n\n    // Check that rt elements contain hiragana readings\n    const rtElements = page.locator('ruby rt');\n    await expect(rtElements.first()).toHaveText(/[ぁ-ん]+/);\n  });\n\n  test('disables submit button when textarea exceeds 10000 characters', async ({ page }) => {\n    await page.goto('/');\n\n    const textarea = page.getByRole('textbox', { name: /japanese text/i });\n    const submitButton = page.getByRole('button', { name: /generate furigana/i });\n\n    // Fill with exactly 10000 characters - should be enabled\n    await textarea.fill('あ'.repeat(10000));\n    await expect(submitButton).toBeEnabled();\n\n    // Note: maxLength attribute prevents typing beyond 10000\n    // Verify counter shows limit\n    await expect(page.getByText('10,000 / 10,000')).toBeVisible();\n  });\n\n  test('disables submit button when textarea is empty', async ({ page }) => {\n    await page.goto('/');\n\n    const submitButton = page.getByRole('button', { name: /generate furigana/i });\n\n    // Button should be disabled initially (empty textarea)\n    await expect(submitButton).toBeDisabled();\n\n    // Fill and clear - should remain disabled\n    const textarea = page.getByRole('textbox', { name: /japanese text/i });\n    await textarea.fill('test');\n    await expect(submitButton).toBeEnabled();\n    await textarea.clear();\n    await expect(submitButton).toBeDisabled();\n  });\n\n  test('keyboard shortcut Cmd/Ctrl+Enter submits form', async ({ page }) => {\n    await page.goto('/');\n\n    const textarea = page.getByRole('textbox', { name: /japanese text/i });\n    await textarea.fill('東京');\n\n    // Use keyboard shortcut (Meta for Mac, Control for others)\n    await textarea.press('Meta+Enter');\n\n    // Wait for ruby elements to appear\n    await expect(page.locator('ruby')).toBeVisible({ timeout: 30000 });\n  });\n\n  test('shows error message and preserves text on API failure', async ({ page, context }) => {\n    // Block OpenAI API requests to simulate failure\n    await context.route('**/api.openai.com/**', route => route.abort());\n\n    await page.goto('/');\n\n    const textarea = page.getByRole('textbox', { name: /japanese text/i });\n    const originalText = '日本語';\n    await textarea.fill(originalText);\n\n    await page.getByRole('button', { name: /generate furigana/i }).click();\n\n    // Wait for error message\n    await expect(page.getByRole('alert')).toHaveText(/something went wrong/i, { timeout: 30000 });\n\n    // Verify textarea still has original text\n    await expect(textarea).toHaveValue(originalText);\n  });\n});\n```\n\nRun with: `pnpm test:e2e`\n\nNote: Tests require a valid OPENAI_API_KEY in .env for the success case. Consider using a test API key with low rate limits.",
         "testStrategy": "Run `pnpm test:e2e` and verify all 5 tests pass. Run with `--headed` flag for visual debugging. Check HTML report in playwright-report/ for failures.",
         "priority": "high",
-        "dependencies": ["3", "14"],
+        "dependencies": [
+          "3",
+          "14"
+        ],
         "status": "pending",
         "subtasks": []
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-18T11:59:23.680Z",
+      "lastModified": "2026-03-19T06:32:30.987Z",
       "taskCount": 15,
-      "completedCount": 4,
-      "tags": ["master"]
+      "completedCount": 5,
+      "tags": [
+        "master"
+      ]
     }
   }
 }
