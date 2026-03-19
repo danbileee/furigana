@@ -134,6 +134,7 @@ export const openaiClient: OpenAI = new OpenAI({ apiKey });
 **Where to apply**: `app/lib/ai/client.ts` only.
 
 **Why this pattern**:
+
 - The guard runs before the `OpenAI` constructor so the error message is project-specific and actionable, pointing the developer to `.env.example`.
 - `process.env["OPENAI_API_KEY"]` (bracket notation) satisfies `noPropertyAccessFromIndexSignature`. Using dot notation (`process.env.OPENAI_API_KEY`) would be a TypeScript compile error under the project's strict config.
 - Passing `apiKey` explicitly to `new OpenAI({ apiKey })` makes the runtime source of the key unambiguous, even though the SDK would read the env var automatically if omitted.
@@ -201,6 +202,7 @@ describe("openaiClient", () => {
 **Where to apply**: `app/lib/ai/client.test.ts` only.
 
 **Why this pattern**:
+
 - `vi.resetModules()` in `beforeEach` ensures each test gets a fresh module evaluation, making the throw-at-import-time behavior observable.
 - `afterEach` restores the env var to its pre-test state using the value captured before the `describe` block runs, preventing cross-test pollution.
 - `await expect(import(...)).rejects.toThrow(...)` is the idiomatic Vitest pattern for asserting that a dynamic import throws synchronously during module evaluation.
@@ -258,15 +260,14 @@ Not applicable for this task. The client module is server-only and has no UI sur
 
 ## Implementation Checklist
 
-- [ ] `app/lib/ai/client.ts` created with validation guard and `openaiClient` export
-- [ ] `pnpm type-check` passes with no errors
-- [ ] `pnpm exec eslint app/lib/ai/client.ts` reports no errors
-- [ ] `app/lib/ai/client.test.ts` created with all four unit tests
-- [ ] `pnpm test` runs the new test file with all tests green
-- [ ] Coverage for `app/lib/ai/client.ts` shows 100% line and branch coverage
-- [ ] No import of `~/lib/ai/client` exists in `entry.client.tsx` or any client-side route export
-- [ ] `pnpm build` succeeds
-- [ ] Task 8 marked as complete in task-master
+- [x] `app/lib/ai/client.ts` created with validation guard and `openaiClient` export
+- [x] `pnpm type-check` passes with no errors
+- [x] `pnpm exec eslint app/lib/ai/client.ts` reports no errors
+- [x] `app/lib/ai/client.test.ts` created with all four unit tests
+- [x] `pnpm test` runs the new test file with all tests green
+- [x] Coverage for `app/lib/ai/client.ts` shows 100% line and branch coverage
+- [x] No import of `~/lib/ai/client` exists in `entry.client.tsx` or any client-side route export
+- [x] `pnpm build` succeeds
 
 ## Notes & Considerations
 
