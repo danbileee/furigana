@@ -13,7 +13,9 @@ export default defineConfig((config) => ({
       {
         org: "wev",
         project: "furigana",
-        authToken: process.env.SENTRY_AUTH_TOKEN,
+        ...(process.env["SENTRY_AUTH_TOKEN"] !== undefined && {
+          authToken: process.env["SENTRY_AUTH_TOKEN"],
+        }),
       },
       config,
     ),

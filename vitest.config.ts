@@ -1,8 +1,14 @@
 import { defineConfig, mergeConfig } from "vitest/config";
+import { defineConfig as defineViteConfig } from "vite";
 import viteConfig from "./vite.config";
 
+const resolvedViteConfig =
+  typeof viteConfig === "function"
+    ? viteConfig({ command: "serve", mode: "test", isSsrBuild: false })
+    : defineViteConfig(viteConfig);
+
 export default mergeConfig(
-  viteConfig,
+  resolvedViteConfig,
   defineConfig({
     test: {
       globals: true,
