@@ -45,6 +45,7 @@ type: reference
 - 10k documents, 100GB assets, 100GB bandwidth
 - 2 public datasets (no private datasets on free tier)
 - Real-time: Live Connections (1k concurrent on free), 15-min retention
+- **No inactivity-based project pausing**
 - Docs: https://www.sanity.io/pricing
 
 ### Contentful (Free Tier)
@@ -66,3 +67,32 @@ type: reference
 - Rich text: 2000 char limit per property
 - Max 1000 blocks per request, 500KB payload
 - Not suitable as primary data store for this use case (too slow, rate-limited, content-model mismatch)
+
+## Supabase (Free Tier) — verified 2026-03-19
+
+### Free tier limits
+- 500 MB database storage
+- 2 GB bandwidth
+- 50k monthly active users
+- **Projects PAUSE after 1 week of inactivity** — requires manual resume from dashboard; no automatic resume on incoming request
+- RLS is enabled by default on all tables (deny-all until explicit policies are created)
+- PostgREST layer exposed; Postgres is not directly publicly accessible
+
+### Package guidance
+- **`@supabase/supabase-js`**: Base client. `createClient(url, key)` — correct for server-side no-auth use cases. Module-level singleton in `*.server.ts` file.
+- **`@supabase/ssr` `createServerClient()`**: Auth session cookie management ONLY. Requires `cookies.getAll()`/`setAll()` wiring per request. Do NOT use for no-auth deployments — adds boilerplate with zero benefit for use cases without session management.
+
+### Critical gotchas
+1. **RLS silent failure**: When RLS is enabled (default), all PostgREST queries return `[]` — not an error — until an explicit ALLOW policy is created. First-time developers mistake this for a failed insert. Fix: `CREATE POLICY "allow all" ON entries FOR ALL USING (true)` for a no-auth personal tool.
+2. **Project pausing**: Free-tier projects pause after 1 week of inactivity. Significant operational burden for tools used sporadically.
+3. **anon key scope**: The anon key must be kept as a server-only env var (no `VITE_` prefix) when data privacy matters — even though it is a "public" key by Supabase convention, keeping it server-side means the PostgREST layer is never exposed to the browser.
+
+### TypeScript type generation
+- `supabase gen types typescript --project-id <id>` generates schema-derived `Database` type
+- `createClient<Database>(url, key)` gives column-name type checking on all queries
+- Queries return `data: Row[] | null` — `noUncheckedIndexedAccess` requires `data?.[0]` patterns
+
+### Sanity vs Supabase comparison (for Furigana use case)
+- **Sanity wins**: No project pausing; simpler no-auth model; public dataset acceptable for non-PII reading passages
+- **Supabase wins**: Data privacy on free tier (private DB with RLS); schema-derived TS types; faster setup for SQL-familiar developers
+- **Draw**: Real-time title update (both use `useFetcher` at React Router layer, no pub/sub needed); data model fit (both handle flat single-entity schema cleanly)

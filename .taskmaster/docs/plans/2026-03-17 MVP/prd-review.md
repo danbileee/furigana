@@ -9,7 +9,7 @@
 
 The Furigana MVP is technically well-scoped and achievable as a solopreneur project. The core loop — paste Japanese text, generate furigana via an AI model, display `<ruby>` annotations, persist entries in a CMS — maps cleanly onto the React Router v7 + SSR stack already in place. No requirement is fundamentally infeasible.
 
-Several decisions have been made explicit in the updated PRD: the default view mode is "Always," the character limit is 10,000 characters (UI-enforced with a counter and disabled submit), inline title editing is desktop-only, the Undo pattern has been replaced by a soft-delete Trash Menu, and the annotation storage format is the raw `漢字{よみ}` string. Two primary decisions remain open: which AI provider to use (GPT-4o-mini is the preferred choice based on cost and format compliance) and which storage backend to use (Sanity free tier via a per-user `.env` API key pattern is the preferred choice). One mobile UX consideration around the "On Hover" mode still requires attention.
+Several decisions have been made explicit in the updated PRD: the default view mode is "Always," the character limit is 10,000 characters (UI-enforced with a counter and disabled submit), inline title editing is desktop-only, the Undo pattern has been replaced by a soft-delete Trash Menu, and the annotation storage format is the raw `漢字{よみ}` string. Two primary decisions remain open: which AI provider to use (GPT-4o-mini is the preferred choice based on cost and format compliance) and which storage backend to use (Turso free tier via a per-deployment `.env` credentials pattern is the preferred choice). One mobile UX consideration around the "On Hover" mode still requires attention.
 
 ---
 
@@ -153,26 +153,26 @@ export async function clientLoader() {
 
 Each history entry requires storing: a unique ID, the raw annotation string, the original text, the AI-generated title (or placeholder), a created-at timestamp, a soft-delete flag with deletion timestamp, and the active/trash state. The total data volume per user is low — a typical user will have at most dozens of entries, each a few kilobytes of annotated text.
 
-The PRD specifies no user authentication (out of scope). The intended architecture uses environment variables (`.env`) to hold the Sanity project ID, dataset name, and API token — meaning each deployment gets its own isolated Sanity workspace. This is a per-developer/per-deployment isolation model, not a shared multi-tenant namespace. See the Decision Framework section for a full analysis of this approach.
+The PRD specifies no user authentication (out of scope). The intended architecture uses environment variables (`.env`) to hold the Turso database URL and auth token (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`) — meaning each deployment gets its own isolated Turso database. This is a per-developer/per-deployment isolation model, not a shared multi-tenant namespace. See the Decision Framework section for a full analysis of this approach.
 
-**CMS Options — Comparison Table:**
+**Storage Backend Options — Comparison Table:**
 
-| | **Sanity (Free Tier)** *(preferred)* | **Directus (Self-Hosted)** | **Contentful (Free Tier)** |
+| | **Turso (Free Tier)** *(preferred)* | **Directus (Self-Hosted)** | **Contentful (Free Tier)** |
 |---|---|---|---|
-| **Free tier** | Yes — 250k API requests/mo, 1M CDN requests/mo, 10k documents, 100GB assets | Yes — fully free to self-host; infrastructure cost only (e.g., Railway ~$5/mo) | Yes — 100k API calls/mo, 25 content types, 10 users |
-| **Developer experience** | Excellent — GROQ query language is powerful; Studio UI for data inspection; strong TypeScript SDK | Excellent — auto-generated REST + GraphQL from any SQL schema; no vendor lock-in; familiar SQL mental model | Good — REST and GraphQL APIs; content modeling UI is polished but less flexible |
-| **API quality** | High — GROQ enables complex queries in a single request; real-time via Live Connections (1k concurrent on free) | High — REST and GraphQL both auto-generated; direct SQL access possible for complex queries | Good — REST and GraphQL; limited filtering compared to GROQ or SQL |
-| **Real-time capability** | Yes — Live Connections (WebSocket-based) included on free tier | Yes — Directus supports WebSocket subscriptions and Server-Sent Events | Limited — webhooks available but no built-in real-time push |
-| **Fit for this use case** | Strong — document storage with rich content, fast CDN, real-time title updates; free tier is generous for a solopreneur MVP; per-deployment isolation via `.env` API keys eliminates the shared-namespace problem | Strong — full control; no rate limit surprises; easy to add columns as requirements evolve; slightly more ops overhead | Moderate — 100k API calls/mo may be tight under heavy use; content modeling is more editorial-focused than developer-data-focused |
-| **Vendor lock-in** | Medium — GROQ is Sanity-specific; migrating requires rewriting queries | Low — data in standard SQL; switch databases or providers without schema migration | Medium — content model and API are Contentful-specific |
-| **Maintenance burden (solopreneur)** | Low — fully managed; no infra to maintain | Medium — requires a server or PaaS deployment; Docker image is available but needs occasional updates | Low — fully managed |
-| **Private datasets on free tier** | No — free tier only supports public datasets | Yes — full access control on self-hosted | Yes |
+| **Free tier** | 500M reads/mo, 10M writes/mo, 5 GB storage, 100 databases | Fully free to self-host; infra ~$5/mo | 100k API calls/mo, 25 content types |
+| **Developer experience** | Excellent — standard SQL; Drizzle ORM via `drizzle-orm/libsql`; local dev with `file:local.db` | Excellent — auto-generated REST + GraphQL from SQL schema | Good — polished UI but less flexible for structured data |
+| **API quality** | High — raw SQL or Drizzle ORM; no new query language to learn | High — REST + GraphQL auto-generated | Good — limited filtering; editorial-CMS-focused |
+| **Real-time capability** | None in production (experimental as of 2026-03) — not a constraint for this app | Yes — WebSocket subscriptions and SSE | Webhooks only |
+| **Fit for this use case** | Strong — flat relational table is a natural SQL fit; private by default; very generous free limits | Strong — full control, no rate limits, private | Moderate — 100k API calls may be tight; not designed for structured rows |
+| **Vendor lock-in** | Very low — libSQL is open-source SQLite fork (MIT); self-hostable | Low — standard SQL | Medium — Contentful-specific |
+| **Maintenance burden** | Low — fully managed | Medium — requires a server | Low — fully managed |
+| **Private on free tier** | Yes — auth token always required | Yes | Yes |
 
-**Key consideration for this use case:** See Decision 1 for a full analysis of the `.env`-based per-deployment Sanity approach and its trade-offs.
+**Key consideration for this use case:** See Decision 1 for a full analysis of the `.env`-based per-deployment Turso approach and its trade-offs. Turso databases are private by default (unlike Sanity's public datasets on the free tier).
 
 **Implementation Approaches:**
 
-- **Option A: Sanity free tier (preferred)** — Persistent cloud storage, real-time title updates, generous free limits. Each deployment uses its own Sanity project via `.env` credentials, eliminating shared-namespace concerns. Requires a Sanity project setup and GROQ query integration. Adds a network round-trip on every read/write.
+- **Option A: Turso free tier (preferred)** — Persistent cloud storage, very generous free limits (500M reads/mo, 10M writes/mo, 5 GB). Each deployment uses its own Turso database via `.env` credentials, eliminating shared-namespace concerns. Natural SQL fit for the flat entry schema. Local dev via `file:local.db` (no auth token needed). Requires Turso account setup and `@libsql/client` or `drizzle-orm/libsql` integration.
 - **Option B: localStorage / IndexedDB (client-side only)** — Zero backend cost, no API key, no rate limits. Use IndexedDB (via the `idb` library) for structured queries and larger data. Loses data on browser storage clear. Suitable as a fallback or for offline-first variations.
 - **Option C: Directus self-hosted** — Most control; suits a builder who wants a proper API layer. Requires Docker or Railway deployment (~$5/mo). Best for projects expecting to grow into multi-user scenarios.
 
@@ -328,9 +328,9 @@ For timestamps to update automatically, a `setInterval` running every 60 seconds
 
 ### Integration Points
 
-- **AI model → annotation string → CMS:** The server action that calls the AI model produces the annotation string. That string is written to the CMS/storage in the same action. The client receives the annotation string in the action response and renders it immediately — no second fetch needed.
-- **AI title → CMS update:** Title generation is a secondary async call using `useFetcher`. The title is written to the CMS as a PATCH on the existing entry record. The sidebar listens for this update (via local state from `useFetcher.data`, polling, or CMS real-time subscription) and updates the placeholder.
-- **Last-viewed ID → localStorage → session restoration:** Decoupled from the CMS — `localStorage` holds only the ID, and the entry content is fetched from the CMS on load via `clientLoader`.
+- **AI model → annotation string → DB:** The server action that calls the AI model produces the annotation string. That string is written to the database in the same action. The client receives the annotation string in the action response and renders it immediately — no second fetch needed.
+- **AI title → DB update:** Title generation is a secondary async call using `useFetcher`. The title is written to the database as an UPDATE on the existing entry record. The sidebar listens for this update (via local state from `useFetcher.data` or polling) and updates the placeholder.
+- **Last-viewed ID → localStorage → session restoration:** Decoupled from the database — `localStorage` holds only the ID, and the entry content is fetched from the database on load via `clientLoader`.
 - **View mode preference → localStorage:** Fully client-side; read via `clientLoader` on route load.
 - **Soft-delete → Trash Menu → restore:** Delete sets `deletedAt` on the record; Trash Menu queries for `deletedAt != null`; restore clears `deletedAt`. All sidebar list queries filter `deletedAt == null`.
 
@@ -340,22 +340,22 @@ For timestamps to update automatically, a `setInterval` running every 60 seconds
 User input (textarea, max 10,000 chars)
   → React Router action (server)
     → AI model API (furigana generation)
-    → CMS write (entry: id, raw text, annotation string, created_at, title: null, deletedAt: null)
+    → DB write (entry: id, raw text, annotation string, created_at, title: null, deletedAt: null)
     → Response to client (annotation string)
   → Client renders ruby HTML from annotation string
   → useFetcher fires background title POST to /api/title
     → AI model API (title generation)
-    → CMS PATCH (entry: title)
+    → DB UPDATE (entry: title)
     → Sidebar updates via useFetcher.data
 
 On page load (clientLoader):
   localStorage.getItem('lastViewedEntryId')
-    → CMS read (entry by ID)
+    → DB read (entry by ID)
     → Check: entry exists AND deletedAt == null
     → Render ruby HTML from annotation string (or fall back to empty input state)
 
 On Trash Menu open:
-  CMS read (entries where deletedAt != null)
+  DB read (entries where deletedAt != null)
   → Display restore / permanent delete actions
 ```
 
@@ -365,27 +365,29 @@ On Trash Menu open:
 
 ### Decision 1: Storage Backend
 
-**What needs to be decided:** Where do entry records live — client-only storage (IndexedDB/localStorage), or a backend CMS?
+**What needs to be decided:** Where do entry records live — client-only storage (IndexedDB/localStorage), or a backend database?
 
-**Preferred choice: Sanity free tier** via the `.env`-based per-user workspace pattern (described below).
+**Preferred choice: Turso free tier** via the `.env`-based per-deployment credentials pattern (described below).
 
-**The `.env` API key pattern — architectural assessment:**
+**The `.env` credentials pattern — architectural assessment:**
 
-The proposed approach stores the Sanity project ID, dataset name, and API token in `.env` environment variables. Each developer or deployer sets up their own Sanity project and provides their own credentials. This means:
+The proposed approach stores the Turso database URL and auth token in `.env` environment variables (`TURSO_DATABASE_URL`, `TURSO_AUTH_TOKEN`). Each developer or deployer sets up their own Turso database and provides their own credentials. This means:
 
-- **Isolation by design:** Each deployment gets a completely separate Sanity workspace. There is no shared namespace problem — user A's entries are in a different Sanity project than user B's entries. The earlier concern about entries from different users being visible to each other disappears entirely.
+- **Isolation by design:** Each deployment gets a completely separate Turso database. There is no shared namespace problem — deployment A's entries are in a different database than deployment B's entries. This eliminates the concern about data leakage across deployments entirely.
 - **Architectural soundness:** This is a well-established pattern for self-serve developer tools and personal-use apps. It is architecturally clean: the app is stateless with respect to storage credentials; the storage backend is fully controlled by the operator. Comparable to how a self-hosted Ghost blog or a personal Notion integration works.
-- **API token security in React Router SSR:** In React Router v7 with SSR, environment variables loaded without the `VITE_` prefix are server-only and never sent to the client. The Sanity API token should be stored as a server-only env var (e.g., `SANITY_API_TOKEN`). All Sanity write operations should go through server-side `action` functions. Reads that don't require authentication can optionally go through a `loader` or `clientLoader` depending on whether SSR pre-rendering is desired for those entries.
-- **Public vs. authenticated dataset:** Sanity's free tier only supports public datasets. This means any client with the project ID and dataset name can read the data without the API token. For a personal-use app where the data is not sensitive, this is acceptable. If the data is considered private, upgrading to a paid Sanity plan (which enables private datasets) or switching to Directus self-hosted (which has full access control) would be required.
-- **Setup friction for non-technical users:** Requiring the user to create a Sanity account, create a project, copy the project ID and API token into a `.env` file, and deploy is a non-trivial setup step for non-technical users. For a solopreneur personal tool this is acceptable; for a product distributed to general users it would need a different approach (e.g., a managed backend or OAuth-based Sanity integration).
+- **API credentials security in React Router SSR:** In React Router v7 with SSR, environment variables loaded without the `VITE_` prefix are server-only and never sent to the client. The Turso database URL and auth token should be stored as server-only env vars (no `VITE_` prefix). All database write operations should go through server-side `action` functions. Reads can optionally go through a `loader` or `clientLoader` depending on whether SSR pre-rendering is desired.
+- **Private by default:** Turso databases always require an auth token; there is no unauthenticated access path. This is a significant advantage over Sanity's free tier (which forces public datasets). The entry data is private by default, eliminating the need for a paid plan upgrade if privacy is a concern.
+- **Natural SQL fit:** The entry schema is a flat 6-column table (id, raw_text, annotation_string, title, created_at, deleted_at). SQL is the natural data model for this structure. Turso's libSQL is a managed SQLite implementation — zero impedance mismatch for a simple relational table.
+- **Setup friction for non-technical users:** Requiring the user to create a Turso account, create a database, and copy credentials into `.env` is a standard setup step for cloud-based tools. For a solopreneur personal tool this is acceptable; for a product distributed to general users it would need a different approach (e.g., a managed backend or OAuth-based integration).
 
 **Key factors:**
 - No authentication is in scope → the `.env` per-deployment model eliminates the shared namespace problem without requiring auth.
-- Cloud sync and cross-device access are explicitly out of scope → the primary advantage of a backend CMS is persistent cloud storage per deployment, not multi-user sync.
-- Future PRD versions may add authentication and sync → Sanity's schema and GROQ queries remain valid if auth is added later; the migration path is to add user identity to entries rather than redesigning storage.
+- Cloud sync and cross-device access are explicitly out of scope → the primary advantage of a backend database is persistent cloud storage per deployment, not multi-user sync.
+- Real-time title updates are handled via `useFetcher.data` polling, not DB push subscriptions → Turso's lack of a production real-time API is not a constraint for this app.
+- Future PRD versions may add authentication and sync → a flat relational table migrates cleanly to a multi-user schema by adding a `user_id` column; the migration path is straightforward.
 
 **Paths forward:**
-- **Path A: Sanity free tier (preferred)** → Timeline: 1–1.5 days (project setup, schema definition, GROQ queries); Complexity: Medium; Trade-offs: Persistent cloud storage, real-time title updates, GROQ learning curve, public dataset on free tier.
+- **Path A: Turso free tier (preferred)** → Timeline: 0.5–1 day (database setup, `@libsql/client` or `drizzle-orm/libsql` integration, schema creation); Complexity: Low-Medium; Trade-offs: Persistent cloud storage, very generous free limits (500M reads/mo, 10M writes/mo, 5 GB), private by default, natural SQL fit, very low vendor lock-in (libSQL is open-source).
 - **Path B: IndexedDB (client-only)** → Timeline: 0.5 days to integrate `idb`; Complexity: Low; Trade-offs: Data is browser-local, lost on storage clear, no cross-device access. Useful as a fallback or interim approach.
 - **Path C: Directus self-hosted** → Timeline: 1.5–2 days (Docker/Railway setup, schema, REST integration); Complexity: Medium-High; Trade-offs: Full control, private datasets, no vendor lock-in, ~$5/mo infrastructure cost.
 
@@ -430,7 +432,7 @@ The PRD leaves this as "to be determined in implementation." This is a minor dec
 The MVP feature set is ambitious for a single developer but achievable in 2–3 weeks of focused work given the existing stack (React Router v7, SSR, shadcn/ui, Tailwind v4). The highest-leverage sequencing is:
 
 1. **Core generation loop first** (textarea → AI call → ruby rendering) — validates the primary value proposition.
-2. **Storage second** (Sanity free tier or IndexedDB for sidebar history) — adds persistence without backend overhead.
+2. **Storage second** (Turso free tier or IndexedDB for sidebar history) — adds persistence without backend overhead.
 3. **View mode toggle third** (CSS class toggle + localStorage via `clientLoader`) — low-effort, high perceived value.
 4. **AI title generation fourth** (`useFetcher` follow-up call, async, non-blocking, additive).
 5. **Soft-delete and Trash Menu fifth** — moderate complexity but well-scoped; the shadcn/ui `Sheet` component handles the menu UI.
@@ -438,11 +440,11 @@ The MVP feature set is ambitious for a single developer but achievable in 2–3 
 
 The sidebar drawer, relative timestamps, and session persistence (`clientLoader`) are all low-complexity items that can be done in parallel with the above.
 
-**Operational complexity:** If Sanity is chosen for storage, the main operational overhead is monitoring API usage against free tier limits (250k API requests/mo) and handling Sanity service downtime (outside the developer's control). For a solopreneur personal-use app at low volume, the free tier is unlikely to be a constraint.
+**Operational complexity:** If Turso is chosen for storage, the main operational overhead is minimal. Turso's free tier (500M reads/mo, 10M writes/mo, 5 GB) is unlikely to be exceeded at MVP solopreneur scale. Local dev via `file:local.db` requires no credentials, reducing environment parity issues. Service downtime is outside the developer's control but well-managed by the Turso SLA.
 
 ### Scalability and Future Growth
 
-The annotation storage format (`今日{きょう}は...`) is compact, human-readable, and portable — it can be re-parsed if the rendering logic changes and does not couple the data to any specific HTML structure. If authentication and cloud sync are added in a later iteration, the data model is simple enough (id, text, annotation, title, timestamps, deletedAt) to migrate cleanly from a per-deployment Sanity workspace to a multi-user schema.
+The annotation storage format (`今日{きょう}は...`) is compact, human-readable, and portable — it can be re-parsed if the rendering logic changes and does not couple the data to any specific HTML structure. If authentication and cloud sync are added in a later iteration, the data model is simple enough (id, text, annotation, title, timestamps, deletedAt) to migrate cleanly from a per-deployment Turso database to a multi-user schema — simply add a `user_id` column or provision per-user databases via the Turso Platform API.
 
 ### Known Gotchas and Best Practices
 
@@ -451,7 +453,7 @@ The annotation storage format (`今日{きょう}は...`) is compact, human-read
 - **SSR hydration and localStorage:** Reading `localStorage` in a component body will cause a hydration mismatch in React Router v7's SSR mode. Always read client-only storage inside a `clientLoader` — this is the idiomatic React Router v7 pattern. Reserve `useEffect` for cases where no loader alternative exists (e.g., recurring timers for relative timestamp updates).
 - **Japanese font rendering:** The default system font stack may not render Japanese characters at the desired quality. Consider specifying a Japanese-capable font (e.g., `Noto Sans JP` from Google Fonts, or `system-ui` which includes CJK fonts on most platforms) to ensure consistent ruby annotation rendering.
 - **Context window for very long articles:** A 10,000-character Japanese article is approximately 10,000 tokens. This is well within the context windows of all three candidate models and GPT-4o-mini's 128k limit in particular. The UI-enforced character cap means this is not a practical concern.
-- **Sanity API token in SSR:** Store the Sanity write token as a server-only env var (no `VITE_` prefix). Never expose it to the client bundle. All Sanity write operations must go through server-side `action` functions. Read operations for the history list can optionally use a public read-only token in a `clientLoader`.
+- **Turso credentials in SSR:** Store `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` as server-only env vars (no `VITE_` prefix). Never expose them to the client bundle. All database operations must go through server-side `action` or `loader` functions. Never instantiate `@libsql/client` in `clientLoader` or client-side modules.
 
 ---
 
@@ -461,13 +463,13 @@ The annotation storage format (`今日{きょう}は...`) is compact, human-read
 |------|-------------|--------|------------|
 | AI model outputs malformed annotation format (missing braces, extra prose) | Medium | High — breaks ruby rendering | Validate output server-side before storing; retry with stricter prompt on format failure |
 | `:hover` CSS behaves unexpectedly on mobile (reveals all furigana on tap) | Medium | Medium — degrades "On Hover" mode on mobile | Use `@media (pointer: fine)` to gate `:hover` rule; fall back to JS click handler on touch devices |
-| Sanity public dataset exposes entries to anyone who knows the project ID | Low (personal-use tool) | Low — entries are non-sensitive reading passages; no PII | Accept as MVP trade-off; upgrade to paid Sanity plan or switch to Directus if data sensitivity increases |
-| IndexedDB data loss (user clears browser storage) | Low | Medium — all history lost | Mitigated by preferring Sanity free tier; if IndexedDB is used, document as a known limitation |
-| Sanity free tier rate limits exceeded under heavy use | Low (MVP scale) | Low | Monitor usage; 250k API requests/mo is unlikely to be hit at solopreneur-personal-use scale |
+| Turso service downtime | Low (managed SLA) | Medium — entries temporarily inaccessible | Accept risk; implement `localStorage` cache fallback for recently viewed entries on next iteration |
+| `TURSO_AUTH_TOKEN` exposed via `VITE_` prefix | Low | High — token could be used to write/delete entries | Use server-only env var naming (no `VITE_` prefix); enforce in code review and `.env.example` documentation |
+| IndexedDB data loss (user clears browser storage) | Low | Medium — all history lost | Mitigated by preferring Turso free tier; if IndexedDB is used, document as a known limitation |
+| Turso free tier row limits exceeded (500M reads, 10M writes) | Very Low (MVP scale) | Low | Unlikely at solopreneur-personal-use scale; free tier is very generous |
 | SSR hydration mismatch from localStorage reads | Medium | Low — causes React warning and possible flash of wrong content | Always use `clientLoader` for client-only storage reads; never read `localStorage` in component body or SSR `loader` |
 | AI title generation fails silently | Medium | Low — fallback to 30-char placeholder is acceptable per PRD | No mitigation needed; PRD explicitly accepts this failure mode |
 | Japanese font not available on user's system | Low | Low — system-ui fallback renders correctly, just with different aesthetics | Specify a web font fallback for Japanese glyphs |
-| Sanity API token accidentally exposed via VITE_ prefix | Low | High — token could be used to write/delete entries | Use server-only env var naming (no `VITE_` prefix); enforce in code review and `.env.example` documentation |
 | Trash retention grows unbounded in MVP (no auto-purge) | Low | Low — only affects storage quota for personal-use data volume | Accept for MVP; add TTL-based purge in a post-MVP iteration |
 
 ---
@@ -478,7 +480,7 @@ The following are remaining spec gaps or ambiguities that should be resolved bef
 
 1. **Define Trash retention period:** The PRD says trash entries are permanently deleted "after a reasonable retention period (to be determined in implementation)." For MVP, explicitly defining "no automatic deletion — user must empty trash manually" eliminates any scheduled job complexity. Recommend updating the PRD with this decision.
 
-2. **Clarify Sanity dataset access scope:** The `.env` per-deployment model means each deployer uses their own Sanity project. The PRD should include a brief setup note for developers (or future documentation) explaining: create a Sanity project, add `SANITY_PROJECT_ID`, `SANITY_DATASET`, and `SANITY_API_TOKEN` to `.env`, and deploy. This prevents configuration ambiguity during implementation.
+2. **Document the Turso setup steps:** The `.env` per-deployment model means each deployer uses their own Turso database. The PRD should include a brief setup note for developers (or future documentation) explaining: create a Turso account, create a database, copy `TURSO_DATABASE_URL` and `TURSO_AUTH_TOKEN` to `.env`, use `file:local.db` for local dev (no credentials needed), and deploy. This prevents configuration ambiguity during implementation.
 
 3. **Specify the mobile trash icon behavior:** The PRD says "on mobile, the trash icon is visible at all times on each sidebar row." Confirm whether this means the icon is always rendered as part of the row layout (requiring space in the row structure) or revealed in a different affordance (e.g., swipe-to-delete). Always-visible is simpler; swipe-to-delete is more polished but requires custom touch event handling.
 
@@ -488,7 +490,7 @@ The following are remaining spec gaps or ambiguities that should be resolved bef
 
 The following questions remain open and should be answered before implementation begins:
 
-1. **Storage:** Sanity free tier (preferred, cloud-persistent, per-deployment isolated via `.env`) or IndexedDB (zero setup, browser-local, data lost on storage clear)? The `.env` model is architecturally sound for this use case — is the setup friction acceptable for the intended deployer audience?
+1. **Storage:** Turso free tier (preferred, cloud-persistent, private by default, per-deployment isolated via `.env`) or IndexedDB (zero setup, browser-local, data lost on storage clear)? The `.env` model is architecturally sound for this use case — is the setup friction acceptable for the intended deployer audience?
 
 2. **AI provider:** GPT-4o-mini (preferred, lowest cost, excellent format compliance) or another provider? Is there a preference for prototyping on Gemini's free tier before committing to GPT-4o-mini billing?
 
@@ -500,7 +502,7 @@ The following questions remain open and should be answered before implementation
 
 **Review Notes:**
 
-Pricing data for OpenAI (GPT-4o-mini: $0.15/$0.60 per MTok) sourced from pricepertoken.com cross-referenced with openai.com/api/pricing as of 2026-03-17. Anthropic Claude pricing sourced from official Anthropic documentation (platform.claude.com/docs). Gemini pricing sourced from ai.google.dev/pricing. Sanity free tier limits sourced from sanity.io/pricing (250k API requests/mo, 1M CDN requests/mo, 10k documents, public datasets only on free tier). Contentful free tier limits sourced from contentful.com/pricing. Directus pricing sourced from directus.io docs; note that the Directus Cloud $15/mo Starter tier was retired in December 2025 — self-hosting is the practical free option. Browser support for HTML `<ruby>` sourced from caniuse.com (97.5% global coverage). All pricing and plan details should be verified against official documentation at implementation time, as provider pricing changes frequently.
+Pricing data for OpenAI (GPT-4o-mini: $0.15/$0.60 per MTok) sourced from pricepertoken.com cross-referenced with openai.com/api/pricing as of 2026-03-17. Anthropic Claude pricing sourced from official Anthropic documentation (platform.claude.com/docs). Gemini pricing sourced from ai.google.dev/pricing. Turso free tier limits sourced from turso.tech/pricing (500M reads/mo, 10M writes/mo, 5 GB storage, 100 databases). Turso SDK documentation sourced from docs.turso.tech/sdk/ts. libSQL (open-source backend) sourced from github.com/tursodatabase/libsql. Contentful free tier limits sourced from contentful.com/pricing. Directus pricing sourced from directus.io docs; note that the Directus Cloud $15/mo Starter tier was retired in December 2025 — self-hosting is the practical free option. Browser support for HTML `<ruby>` sourced from caniuse.com (97.5% global coverage). All pricing and plan details should be verified against official documentation at implementation time, as provider pricing changes frequently.
 
 The following items from the original review are now resolved by the updated PRD and no longer require decisions:
 - Default view mode → **Always** (resolved)
