@@ -73,13 +73,13 @@ This milestone covers steps 1–5 of the full product user journey. Steps 6–11
 
 ### Alternative Flows
 
-| Input Type | Expected Outcome |
-|---|---|
-| Pure hiragana ("こんにちは") | Reading view displays text as-is; no `<ruby>` elements; no crash |
-| Pure romaji ("Hello world") | Reading view displays text as-is; no `<ruby>` elements; no crash |
-| Mixed kanji + hiragana + punctuation | Kanji compounds annotated; hiragana and punctuation rendered as plain `<span>` |
-| Empty textarea | No action; no error; button is inert |
-| Textarea > 10,000 characters | Submit button disabled; character counter highlighted; keyboard shortcut blocked |
+| Input Type                           | Expected Outcome                                                                 |
+| ------------------------------------ | -------------------------------------------------------------------------------- |
+| Pure hiragana ("こんにちは")         | Reading view displays text as-is; no `<ruby>` elements; no crash                 |
+| Pure romaji ("Hello world")          | Reading view displays text as-is; no `<ruby>` elements; no crash                 |
+| Mixed kanji + hiragana + punctuation | Kanji compounds annotated; hiragana and punctuation rendered as plain `<span>`   |
+| Empty textarea                       | No action; no error; button is inert                                             |
+| Textarea > 10,000 characters         | Submit button disabled; character counter highlighted; keyboard shortcut blocked |
 
 ---
 
@@ -92,6 +92,7 @@ This milestone covers steps 1–5 of the full product user journey. Steps 6–11
 A large textarea occupying the main content area of the route. This is the default state of `app/routes/home.tsx` when no action data is present.
 
 **Behaviors**:
+
 - Placeholder text: `"Paste Japanese text here…"` (or similar; exact copy TBD)
 - Maximum character limit: 10,000 characters
 - Character counter renders below the textarea: `{currentCount} / 10,000`
@@ -104,11 +105,13 @@ A large textarea occupying the main content area of the route. This is the defau
 - The shortcut is implemented via `onKeyDown` on the textarea element only; it does not fire from other elements on the page
 
 **State**:
+
 - `text` is a controlled React state value bound to the textarea's `value` prop
 - Initial value: empty string on first render; initialized from `useActionData()` on error path so content is preserved after a failed submission
 - Character count is derived from `text.length` — no separate state
 
 **UI Structure**:
+
 ```
 <Form method="post">
   <InputArea
@@ -129,10 +132,12 @@ A large textarea occupying the main content area of the route. This is the defau
 The React Router server `action` function is the single point where GPT-4o-mini is called. It reads the submitted text, calls the AI client, validates the response, and returns structured data to the client.
 
 **Action inputs**:
+
 - `text` — extracted from `formData.get('text')` as a string
 - Validated: non-empty, not exceeding 10,000 characters (belt-and-suspenders server-side validation mirrors client guards)
 
 **Action flow**:
+
 ```
 1. Extract and validate text from formData
 2. Call openai client with system prompt + user message
@@ -143,6 +148,7 @@ The React Router server `action` function is the single point where GPT-4o-mini 
 ```
 
 **Action return types**:
+
 ```typescript
 type ActionSuccess = {
   annotationString: string;
@@ -165,21 +171,23 @@ type ActionData = ActionSuccess | ActionError;
 A server-only module that exports a pre-configured `openai` SDK client instance.
 
 **Requirements**:
+
 - Import `OpenAI` from the `openai` npm package
 - Configure with `process.env.OPENAI_API_KEY` — no `VITE_` prefix; this module must never be imported by any client-side code
 - Export a single named constant `openaiClient` of type `OpenAI`
 - The module should throw at import time (startup) if `OPENAI_API_KEY` is not set, rather than failing silently at request time
 
 **Pattern**:
+
 ```typescript
 // app/lib/ai/client.ts
 // Server-only — do not import from client-side modules
 
-import OpenAI from 'openai';
+import OpenAI from "openai";
 
-const apiKey = process.env['OPENAI_API_KEY'];
+const apiKey = process.env["OPENAI_API_KEY"];
 if (!apiKey) {
-  throw new Error('OPENAI_API_KEY environment variable is required');
+  throw new Error("OPENAI_API_KEY environment variable is required");
 }
 
 export const openaiClient = new OpenAI({ apiKey });
@@ -192,6 +200,7 @@ export const openaiClient = new OpenAI({ apiKey });
 A server-only module that exports the system prompt and a helper to build the user message.
 
 **System prompt requirements**:
+
 - Instruct GPT-4o-mini to annotate every kanji compound with its hiragana reading in `漢字{よみ}` format
 - Instruct the model to return **only** the annotated string — no explanations, no preamble, no markdown code blocks, no quotation marks
 - Include 2–3 few-shot examples directly in the system prompt to lock in the format
@@ -211,6 +220,7 @@ Output: こんにちは！元気{げんき}ですか？
 ```
 
 **Exports**:
+
 ```typescript
 export const FURIGANA_SYSTEM_PROMPT: string;
 export function buildUserMessage(text: string): string;
@@ -223,14 +233,15 @@ export function buildUserMessage(text: string): string;
 Transforms the AI-generated annotation string into a typed token array. This is the most critical unit in the milestone — it is the boundary between raw AI output and safe, type-checked rendering.
 
 **Token type definition**:
+
 ```typescript
 type TextToken = {
-  type: 'text';
+  type: "text";
   value: string;
 };
 
 type RubyToken = {
-  type: 'ruby';
+  type: "ruby";
   kanji: string;
   reading: string;
 };
@@ -239,6 +250,7 @@ export type FuriganaToken = TextToken | RubyToken;
 ```
 
 **Parser contract**:
+
 ```typescript
 export function parseAnnotationString(input: string): FuriganaToken[];
 ```
@@ -246,6 +258,7 @@ export function parseAnnotationString(input: string): FuriganaToken[];
 **Parsing algorithm**:
 
 The input string contains sequences of:
+
 - Plain text characters (hiragana, katakana, punctuation, romaji, etc.)
 - Annotated compounds in the form `漢字{よみ}`
 
@@ -274,19 +287,19 @@ State machine approach:
 
 **Edge cases the parser must handle** (all must have unit tests):
 
-| Input | Expected Output |
-|---|---|
-| `"日本語{にほんご}"` | `[{ type: 'ruby', kanji: '日本語', reading: 'にほんご' }]` |
-| `"行{い}きました"` | `[{ type: 'ruby', kanji: '行', reading: 'い' }, { type: 'text', value: 'きました' }]` |
-| `"東京{とうきょう}に行{い}きました"` | Two ruby tokens + one text token |
-| `"こんにちは"` (pure hiragana) | `[{ type: 'text', value: 'こんにちは' }]` |
-| `"Hello world"` (pure romaji) | `[{ type: 'text', value: 'Hello world' }]` |
-| `""` (empty string) | `[]` |
-| `"漢字{よみ}漢字{よみ}"` (consecutive ruby) | Two adjacent ruby tokens, no text token between |
-| `"unclosed{"` (malformed: unclosed brace) | Treat the `{` and everything after as plain text: `[{ type: 'text', value: 'unclosed{' }]` |
-| `"bad{nested{braces}}"` (malformed: nested braces) | Treat outer brace content literally or skip; must not crash or produce invalid tokens |
-| `"text{}"` (empty reading) | Either skip (produce a text token for `"text"`) or produce a ruby token with empty reading; document the chosen behavior in a comment |
-| Mixed: `"東京{とうきょう}は元気{げんき}？"` | Two ruby tokens and one text token `"は"` and `"？"` |
+| Input                                              | Expected Output                                                                                                                       |
+| -------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------- |
+| `"日本語{にほんご}"`                               | `[{ type: 'ruby', kanji: '日本語', reading: 'にほんご' }]`                                                                            |
+| `"行{い}きました"`                                 | `[{ type: 'ruby', kanji: '行', reading: 'い' }, { type: 'text', value: 'きました' }]`                                                 |
+| `"東京{とうきょう}に行{い}きました"`               | Two ruby tokens + one text token                                                                                                      |
+| `"こんにちは"` (pure hiragana)                     | `[{ type: 'text', value: 'こんにちは' }]`                                                                                             |
+| `"Hello world"` (pure romaji)                      | `[{ type: 'text', value: 'Hello world' }]`                                                                                            |
+| `""` (empty string)                                | `[]`                                                                                                                                  |
+| `"漢字{よみ}漢字{よみ}"` (consecutive ruby)        | Two adjacent ruby tokens, no text token between                                                                                       |
+| `"unclosed{"` (malformed: unclosed brace)          | Treat the `{` and everything after as plain text: `[{ type: 'text', value: 'unclosed{' }]`                                            |
+| `"bad{nested{braces}}"` (malformed: nested braces) | Treat outer brace content literally or skip; must not crash or produce invalid tokens                                                 |
+| `"text{}"` (empty reading)                         | Either skip (produce a text token for `"text"`) or produce a ruby token with empty reading; document the chosen behavior in a comment |
+| Mixed: `"東京{とうきょう}は元気{げんき}？"`        | Two ruby tokens and one text token `"は"` and `"？"`                                                                                  |
 
 **Safety requirement**: The parser must never return any token with HTML markup in its string values. It must never be called with raw HTML input that could produce script injection. The parser is purely string-splitting — no HTML generation occurs here.
 
@@ -297,6 +310,7 @@ State machine approach:
 Renders the parsed token array as semantic HTML using `<ruby>` elements. This component receives the token array (not the raw annotation string) as its prop.
 
 **Props**:
+
 ```typescript
 type ReadingViewProps = {
   tokens: FuriganaToken[];
@@ -304,6 +318,7 @@ type ReadingViewProps = {
 ```
 
 **Rendering rules**:
+
 - `TextToken` → `<span>{value}</span>`
 - `RubyToken` → `<ruby>{kanji}<rp>(</rp><rt>{reading}</rt><rp>)</rp></ruby>`
 - The `<rp>` elements provide fallback parentheses for browsers that do not support ruby — this is a semantic HTML best practice
@@ -311,10 +326,11 @@ type ReadingViewProps = {
 - **Never** use `dangerouslySetInnerHTML` — all content is expressed as typed JSX values
 
 **Container structure**:
+
 ```tsx
 <article className="reading-view">
   {tokens.map((token, index) =>
-    token.type === 'ruby' ? (
+    token.type === "ruby" ? (
       <ruby key={index}>
         {token.kanji}
         <rp>(</rp>
@@ -323,7 +339,7 @@ type ReadingViewProps = {
       </ruby>
     ) : (
       <span key={index}>{token.value}</span>
-    )
+    ),
   )}
 </article>
 ```
@@ -359,6 +375,7 @@ CSS rules that ensure `<ruby>`, `<rt>`, and `<rp>` elements render correctly und
 ```
 
 **Reading view typography** (also in `app.css` or as Tailwind utility classes on the container):
+
 - Font size: sufficient for comfortable reading (e.g., `1rem` or `1.125rem` base)
 - Line height: generous to accommodate ruby text above base text (e.g., `2.5` or `3`)
 - The ruby text must not overlap the base text or the line above
@@ -385,17 +402,20 @@ The actual `.env` file must be in `.gitignore` (verify this is already configure
 **Trigger**: User submits the form (button click or keyboard shortcut)
 
 **React Router idiomatic pattern**:
+
 ```typescript
 const navigation = useNavigation();
-const isSubmitting = navigation.state === 'submitting';
+const isSubmitting = navigation.state === "submitting";
 ```
 
 **Effects of `isSubmitting === true`**:
+
 - Textarea: `disabled={true}` — prevents editing during generation
 - Submit button: `disabled={true}` + shows a spinner icon (Lucide `Loader2` with `animate-spin` class)
 - Button label changes from "Generate Furigana" to "Generating…" or shows spinner only
 
 **Effects of `isSubmitting === false`**:
+
 - If `useActionData()` returns `{ annotationString }`: render `ReadingView` instead of `InputArea`
 - If `useActionData()` returns `{ error }`: render `InputArea` with error message, textarea re-enabled with original content
 
@@ -412,7 +432,7 @@ const isSubmitting = navigation.state === 'submitting';
 ```typescript
 const actionData = useActionData<ActionData>();
 const [text, setText] = useState(
-  actionData && 'originalText' in actionData ? actionData.originalText : ''
+  actionData && "originalText" in actionData ? actionData.originalText : "",
 );
 ```
 
@@ -461,12 +481,12 @@ The furigana reading view is not a utility display — it is meant for sustained
 
 #### Submit Button States
 
-| State | Label | Icon | `disabled` |
-|---|---|---|---|
-| Empty textarea | "Generate Furigana" | none | `true` |
-| Valid input | "Generate Furigana" | none | `false` |
-| Over limit | "Generate Furigana" | none | `true` |
-| Submitting | "Generating…" | Lucide `Loader2` spin | `true` |
+| State          | Label               | Icon                  | `disabled` |
+| -------------- | ------------------- | --------------------- | ---------- |
+| Empty textarea | "Generate Furigana" | none                  | `true`     |
+| Valid input    | "Generate Furigana" | none                  | `false`    |
+| Over limit     | "Generate Furigana" | none                  | `true`     |
+| Submitting     | "Generating…"       | Lucide `Loader2` spin | `true`     |
 
 #### Accessibility
 
@@ -494,6 +514,7 @@ The furigana reading view is not a utility display — it is meant for sustained
 **Scenario**: User pastes or types more than 10,000 characters.
 
 **Handling**:
+
 - The textarea's `maxLength` attribute is set to `10000` to prevent typing beyond the limit
 - For paste events that would exceed the limit, the textarea truncates at 10,000 characters (browser native behavior with `maxLength`)
 - The character counter shows `10000 / 10000` (or the exact count) in warning color
@@ -509,6 +530,7 @@ The furigana reading view is not a utility display — it is meant for sustained
 **Scenario**: The `openai` SDK call throws (network error, rate limit, invalid API key, service outage).
 
 **Handling**:
+
 - The `action` catches the error with a `try/catch` block
 - Returns `{ error: 'Something went wrong. Please try again.', originalText: text }` with an appropriate HTTP status (200 is acceptable for React Router action error returns to keep client-side handling simple; alternatively use a thrown `Response` object)
 - `useActionData()` on the client returns the error object
@@ -523,6 +545,7 @@ The furigana reading view is not a utility display — it is meant for sustained
 **Scenario**: GPT-4o-mini returns a response that is non-empty but does not conform to the `漢字{よみ}` format (e.g., returns a JSON object, returns the text unchanged with no annotations, returns text with incorrectly paired braces).
 
 **Handling**:
+
 - **Non-empty, parseable string**: Return `{ annotationString }` and let the parser handle it. The parser is designed to be resilient — malformed braces produce text tokens rather than crashes. The user sees the text with partial or no annotations, which is acceptable graceful degradation.
 - **Empty string response**: Treat as a failure — return the error path.
 - **Non-string response**: The `openai` SDK always returns strings in `message.content`; this case is handled by TypeScript types.
@@ -536,6 +559,7 @@ The furigana reading view is not a utility display — it is meant for sustained
 **Scenario**: User submits text that contains no kanji (e.g., `"こんにちは"`, `"Hello world"`, `"1234567890"`).
 
 **Handling**:
+
 - The AI returns the text unchanged (no `{...}` annotations)
 - The parser produces an array of `TextToken` values only
 - `ReadingView` renders plain `<span>` elements — no `<ruby>` elements
@@ -549,6 +573,7 @@ The furigana reading view is not a utility display — it is meant for sustained
 **Scenario**: The annotation string contains unclosed `{`, nested braces `{outer{inner}}`, or mismatched pairs.
 
 **Handling** (parser-level, not action-level):
+
 - **Unclosed `{`**: Treat everything from the `{` to end of string as a text token
 - **Nested braces**: Treat the outer content literally; the inner `{` triggers the same unclosed-brace logic
 - **Empty reading `{}`**: Implementation-defined; either produce a ruby token with empty `reading` (which renders an empty `<rt>`) or skip and produce a text token for the kanji. Document the chosen behavior in the parser source code.
@@ -570,18 +595,18 @@ The furigana reading view is not a utility display — it is meant for sustained
 
 The following features appear in the master PRD but are explicitly deferred:
 
-| Feature | Milestone |
-|---|---|
-| Persisting entries to Sanity | Milestone 2 |
-| History sidebar | Milestone 2 |
-| "New" button | Milestone 2 |
-| View mode toggle (Always / On Hover) | Milestone 3 |
-| AI title generation | Milestone 4 |
-| Inline title editing | Milestone 5 |
-| Soft-delete and Trash menu | Milestone 6 |
+| Feature                                           | Milestone    |
+| ------------------------------------------------- | ------------ |
+| Persisting entries to Turso DB                    | Milestone 2  |
+| History sidebar                                   | Milestone 2  |
+| "New" button                                      | Milestone 2  |
+| View mode toggle (Always / On Hover)              | Milestone 3  |
+| AI title generation                               | Milestone 4  |
+| Inline title editing                              | Milestone 5  |
+| Soft-delete and Trash menu                        | Milestone 6  |
 | Session persistence (last-viewed entry on reload) | Milestone 7b |
-| Relative timestamps | Milestone 7a |
-| Mobile sidebar drawer | Milestone 8 |
+| Relative timestamps                               | Milestone 7a |
+| Mobile sidebar drawer                             | Milestone 8  |
 
 In this milestone, `home.tsx` has **no loader** and **no sidebar**. The route renders either `InputArea` or `ReadingView` based solely on action data. The page has no persistent state between sessions.
 
@@ -599,17 +624,17 @@ Build the complete end-to-end furigana generation loop: textarea input → form 
 
 ### Key Components
 
-| Component | Type | Status | Responsibility |
-|---|---|---|---|
-| `app/routes/home.tsx` | Route component | Rewrite | App shell; form with `action`; conditional render of `InputArea` vs `ReadingView` |
-| `app/lib/ai/client.ts` | Server-only module | New | Configured `OpenAI` SDK instance |
-| `app/lib/ai/prompts.ts` | Server-only module | New | System prompt string and `buildUserMessage` helper |
-| `app/lib/furigana/parser.ts` | Shared module (server+client) | New | `parseAnnotationString` function; `FuriganaToken` types |
-| `app/components/furigana/ReadingView.tsx` | React component | New | Renders `FuriganaToken[]` as `<ruby>` JSX |
-| `app/components/furigana/InputArea.tsx` | React component | New | Controlled textarea with counter and submit button |
-| `app/app.css` | CSS | Modify | Add ruby base rules in `@layer base` |
-| `.env.example` | Config | New | Document `OPENAI_API_KEY` |
-| `package.json` | Config | Modify | Add `openai`, `vitest`, `@playwright/test` as dependencies |
+| Component                                 | Type                          | Status  | Responsibility                                                                    |
+| ----------------------------------------- | ----------------------------- | ------- | --------------------------------------------------------------------------------- |
+| `app/routes/home.tsx`                     | Route component               | Rewrite | App shell; form with `action`; conditional render of `InputArea` vs `ReadingView` |
+| `app/lib/ai/client.ts`                    | Server-only module            | New     | Configured `OpenAI` SDK instance                                                  |
+| `app/lib/ai/prompts.ts`                   | Server-only module            | New     | System prompt string and `buildUserMessage` helper                                |
+| `app/lib/furigana/parser.ts`              | Shared module (server+client) | New     | `parseAnnotationString` function; `FuriganaToken` types                           |
+| `app/components/furigana/ReadingView.tsx` | React component               | New     | Renders `FuriganaToken[]` as `<ruby>` JSX                                         |
+| `app/components/furigana/InputArea.tsx`   | React component               | New     | Controlled textarea with counter and submit button                                |
+| `app/app.css`                             | CSS                           | Modify  | Add ruby base rules in `@layer base`                                              |
+| `.env.example`                            | Config                        | New     | Document `OPENAI_API_KEY`                                                         |
+| `package.json`                            | Config                        | Modify  | Add `openai`, `vitest`, `@playwright/test` as dependencies                        |
 
 ---
 
@@ -651,6 +676,7 @@ User input (textarea)
 #### Token Array as the XSS Boundary
 
 The AI output (`annotationString`) is an untrusted string from an external API. The parser is the single point where this string is analyzed. After parsing:
+
 - Every `RubyToken.kanji` and `RubyToken.reading` is a plain string inserted into JSX via `{}` interpolation — React escapes it automatically
 - Every `TextToken.value` is similarly escaped
 - `dangerouslySetInnerHTML` is never used in this milestone
@@ -679,6 +705,7 @@ Implement in this order, as each step is a prerequisite for the next:
 #### Phase 1: Infrastructure Setup
 
 1. **Install dependencies**:
+
    ```bash
    pnpm add openai
    pnpm add -D vitest @vitest/coverage-v8 @playwright/test
@@ -765,22 +792,22 @@ All commands must pass before considering the milestone complete.
 Required test cases (exhaustive — every case must have its own `it()` block):
 
 ```typescript
-describe('parseAnnotationString', () => {
-  it('parses a single kanji compound with reading')
-  it('parses kanji in the middle of hiragana text')
-  it('parses multiple consecutive ruby tokens')
-  it('parses text with mixed kanji, hiragana, and punctuation')
-  it('returns a single text token for pure hiragana input')
-  it('returns a single text token for pure romaji input')
-  it('returns an empty array for empty string input')
-  it('handles consecutive ruby tokens with no text between them')
-  it('handles unclosed opening brace — treats as text')
-  it('handles nested braces — does not crash')
-  it('handles empty reading braces {}')
-  it('handles input that is only braces {}')
-  it('handles multi-character readings')
-  it('produces no HTML in token values')
-})
+describe("parseAnnotationString", () => {
+  it("parses a single kanji compound with reading");
+  it("parses kanji in the middle of hiragana text");
+  it("parses multiple consecutive ruby tokens");
+  it("parses text with mixed kanji, hiragana, and punctuation");
+  it("returns a single text token for pure hiragana input");
+  it("returns a single text token for pure romaji input");
+  it("returns an empty array for empty string input");
+  it("handles consecutive ruby tokens with no text between them");
+  it("handles unclosed opening brace — treats as text");
+  it("handles nested braces — does not crash");
+  it("handles empty reading braces {}");
+  it("handles input that is only braces {}");
+  it("handles multi-character readings");
+  it("produces no HTML in token values");
+});
 ```
 
 Coverage target: 100% line coverage (`@vitest/coverage-v8`)
@@ -788,13 +815,13 @@ Coverage target: 100% line coverage (`@vitest/coverage-v8`)
 **`app/lib/ai/prompts.test.ts`**
 
 ```typescript
-describe('FURIGANA_SYSTEM_PROMPT', () => {
-  it('matches snapshot')
-})
+describe("FURIGANA_SYSTEM_PROMPT", () => {
+  it("matches snapshot");
+});
 
-describe('buildUserMessage', () => {
-  it('wraps the input text in the expected structure')
-})
+describe("buildUserMessage", () => {
+  it("wraps the input text in the expected structure");
+});
 ```
 
 #### Integration Tests (Vitest with mocks)
@@ -804,13 +831,13 @@ describe('buildUserMessage', () => {
 Mock strategy: `vi.mock('~/lib/ai/client', () => ({ openaiClient: { chat: { completions: { create: vi.fn() } } } }))`
 
 ```typescript
-describe('home action', () => {
-  it('returns annotationString on valid AI response')
-  it('returns error on AI API failure')
-  it('returns error on empty text input without calling AI')
-  it('calls parser with the AI response string')
-  it('returns originalText in the error response')
-})
+describe("home action", () => {
+  it("returns annotationString on valid AI response");
+  it("returns error on AI API failure");
+  it("returns error on empty text input without calling AI");
+  it("calls parser with the AI response string");
+  it("returns originalText in the error response");
+});
 ```
 
 #### End-to-End Tests (Playwright)
@@ -818,18 +845,18 @@ describe('home action', () => {
 **`e2e/home.spec.ts`**
 
 ```typescript
-test('generates furigana for valid Japanese input', async ({ page }) => {
+test("generates furigana for valid Japanese input", async ({ page }) => {
   // Navigate, paste Japanese text, submit, assert <ruby> and <rt> in DOM
-})
+});
 
-test('disables submit button when textarea exceeds 10000 characters', async ({ page }) => {
+test("disables submit button when textarea exceeds 10000 characters", async ({ page }) => {
   // Fill textarea with 10001 chars (programmatically), assert button disabled
-})
+});
 
-test('shows no error and no navigation for empty submission attempt', async ({ page }) => {
+test("shows no error and no navigation for empty submission attempt", async ({ page }) => {
   // Assert button disabled on empty textarea
   // Attempt keyboard shortcut, assert no navigation
-})
+});
 ```
 
 ---
@@ -838,36 +865,36 @@ test('shows no error and no navigation for empty submission attempt', async ({ p
 
 The milestone is complete when all of the following exist and pass verification:
 
-| Deliverable | Verification |
-|---|---|
-| `app/lib/ai/client.ts` | Module imports without error; TypeScript compiles |
-| `app/lib/ai/prompts.ts` | Snapshot test passes |
-| `app/lib/furigana/parser.ts` | 100% line coverage in Vitest |
-| `app/lib/furigana/parser.test.ts` | All test cases pass |
-| `app/components/furigana/ReadingView.tsx` | Renders `<ruby>` elements correctly in browser |
-| `app/components/furigana/InputArea.tsx` | Counter, disable logic, loading state work correctly |
-| `app/routes/home.tsx` (rewritten) | Integration tests pass; action correctly returns data |
-| `app/app.css` (modified) | Ruby elements render with correct display in browser |
-| `.env.example` | Contains `OPENAI_API_KEY=` |
-| `e2e/home.spec.ts` | All three Playwright tests pass |
-| `pnpm type-check` | Zero errors |
-| `pnpm exec eslint .` | Zero errors |
+| Deliverable                               | Verification                                          |
+| ----------------------------------------- | ----------------------------------------------------- |
+| `app/lib/ai/client.ts`                    | Module imports without error; TypeScript compiles     |
+| `app/lib/ai/prompts.ts`                   | Snapshot test passes                                  |
+| `app/lib/furigana/parser.ts`              | 100% line coverage in Vitest                          |
+| `app/lib/furigana/parser.test.ts`         | All test cases pass                                   |
+| `app/components/furigana/ReadingView.tsx` | Renders `<ruby>` elements correctly in browser        |
+| `app/components/furigana/InputArea.tsx`   | Counter, disable logic, loading state work correctly  |
+| `app/routes/home.tsx` (rewritten)         | Integration tests pass; action correctly returns data |
+| `app/app.css` (modified)                  | Ruby elements render with correct display in browser  |
+| `.env.example`                            | Contains `OPENAI_API_KEY=`                            |
+| `e2e/home.spec.ts`                        | All three Playwright tests pass                       |
+| `pnpm type-check`                         | Zero errors                                           |
+| `pnpm exec eslint .`                      | Zero errors                                           |
 
 ---
 
 ### Success Criteria
 
-| Criterion | How to Verify |
-|---|---|
-| Submitting a standard Japanese paragraph produces a reading view with correct ruby annotations | Browser + Playwright E2E test |
-| Pure hiragana or romaji input produces the reading view with no `<ruby>` elements and no crash | Browser + parser unit test for pure hiragana/romaji |
-| Malformed AI response returns an inline error without losing textarea content | Integration test with mocked malformed AI response |
-| Parser unit tests pass at 100% line coverage | `pnpm test --coverage` |
-| `pnpm type-check` passes with zero errors | `pnpm type-check` |
-| Submit button is disabled when textarea is empty | Browser + Playwright E2E test |
-| Submit button is disabled when character count exceeds 10,000 | Browser + Playwright E2E test |
-| `OPENAI_API_KEY` does not appear in client bundle | Browser DevTools → Network → JS bundles (grep for key prefix) |
-| No `dangerouslySetInnerHTML` in furigana components | Code review / ESLint rule |
+| Criterion                                                                                      | How to Verify                                                 |
+| ---------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| Submitting a standard Japanese paragraph produces a reading view with correct ruby annotations | Browser + Playwright E2E test                                 |
+| Pure hiragana or romaji input produces the reading view with no `<ruby>` elements and no crash | Browser + parser unit test for pure hiragana/romaji           |
+| Malformed AI response returns an inline error without losing textarea content                  | Integration test with mocked malformed AI response            |
+| Parser unit tests pass at 100% line coverage                                                   | `pnpm test --coverage`                                        |
+| `pnpm type-check` passes with zero errors                                                      | `pnpm type-check`                                             |
+| Submit button is disabled when textarea is empty                                               | Browser + Playwright E2E test                                 |
+| Submit button is disabled when character count exceeds 10,000                                  | Browser + Playwright E2E test                                 |
+| `OPENAI_API_KEY` does not appear in client bundle                                              | Browser DevTools → Network → JS bundles (grep for key prefix) |
+| No `dangerouslySetInnerHTML` in furigana components                                            | Code review / ESLint rule                                     |
 
 ---
 
@@ -875,15 +902,15 @@ The milestone is complete when all of the following exist and pass verification:
 
 ### External Dependencies (Must Be Complete Before Starting)
 
-| Dependency | Status | Notes |
-|---|---|---|
-| Node.js ≥ 22 | Must be installed | Verified by `node --version` |
-| pnpm ≥ 10 | Must be installed | Verified by `pnpm --version` |
-| OpenAI API key with GPT-4o-mini access | Must be provisioned | Pay-as-you-go billing must be enabled; rate limits are unlikely to be hit at development volume |
-| `openai` npm package | Must be installed | `pnpm add openai` |
-| `vitest` and `@vitest/coverage-v8` | Must be installed | `pnpm add -D vitest @vitest/coverage-v8` |
-| `@playwright/test` | Must be installed | `pnpm add -D @playwright/test && pnpx playwright install` |
-| Existing project setup (Vite, React Router, Tailwind v4) | Already in place | Verified by `pnpm dev` running without errors |
+| Dependency                                               | Status              | Notes                                                                                           |
+| -------------------------------------------------------- | ------------------- | ----------------------------------------------------------------------------------------------- |
+| Node.js ≥ 22                                             | Must be installed   | Verified by `node --version`                                                                    |
+| pnpm ≥ 10                                                | Must be installed   | Verified by `pnpm --version`                                                                    |
+| OpenAI API key with GPT-4o-mini access                   | Must be provisioned | Pay-as-you-go billing must be enabled; rate limits are unlikely to be hit at development volume |
+| `openai` npm package                                     | Must be installed   | `pnpm add openai`                                                                               |
+| `vitest` and `@vitest/coverage-v8`                       | Must be installed   | `pnpm add -D vitest @vitest/coverage-v8`                                                        |
+| `@playwright/test`                                       | Must be installed   | `pnpm add -D @playwright/test && pnpx playwright install`                                       |
+| Existing project setup (Vite, React Router, Tailwind v4) | Already in place    | Verified by `pnpm dev` running without errors                                                   |
 
 ### Internal Dependencies (Within This Milestone)
 
@@ -916,30 +943,30 @@ Start with `parser.ts` and its tests — this validates the core algorithm befor
 
 This milestone's design decisions constrain future milestones. Do not deviate from these contracts without updating the downstream milestone specs:
 
-| Decision | Downstream Impact |
-|---|---|
-| `FuriganaToken[]` is the canonical data type for parsed annotations | Milestone 2 stores `annotationString` (not tokens) in Sanity; re-parses on load. Milestone 3's `ReadingView` receives the same token array. |
-| `action` returns `{ annotationString: string }` | Milestone 2 adds `{ entryId: string }` to this same return type — design `ActionSuccess` to be extensible |
-| `ReadingView` accepts `tokens: FuriganaToken[]` as its only prop | Milestone 3 adds `viewMode: 'always' \| 'on-hover'` as a second prop — leave room for this addition |
-| `app/lib/ai/client.ts` exports `openaiClient` | Milestone 4 imports the same client for title generation |
-| `app/lib/ai/prompts.ts` contains furigana prompt | Milestone 4 adds a separate title prompt to this module — design the module to export multiple named constants cleanly |
-| Ruby CSS in `@layer base` | Milestone 3 adds `[data-view-mode]` CSS rules to `app.css` — the CSS architecture is already established |
+| Decision                                                            | Downstream Impact                                                                                                                             |
+| ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| `FuriganaToken[]` is the canonical data type for parsed annotations | Milestone 2 stores `annotationString` (not tokens) in Turso DB; re-parses on load. Milestone 3's `ReadingView` receives the same token array. |
+| `action` returns `{ annotationString: string }`                     | Milestone 2 adds `{ entryId: string }` to this same return type — design `ActionSuccess` to be extensible                                     |
+| `ReadingView` accepts `tokens: FuriganaToken[]` as its only prop    | Milestone 3 adds `viewMode: 'always' \| 'on-hover'` as a second prop — leave room for this addition                                           |
+| `app/lib/ai/client.ts` exports `openaiClient`                       | Milestone 4 imports the same client for title generation                                                                                      |
+| `app/lib/ai/prompts.ts` contains furigana prompt                    | Milestone 4 adds a separate title prompt to this module — design the module to export multiple named constants cleanly                        |
+| Ruby CSS in `@layer base`                                           | Milestone 3 adds `[data-view-mode]` CSS rules to `app.css` — the CSS architecture is already established                                      |
 
 ### Potential Conflicts
 
-| Conflict | Resolution |
-|---|---|
-| Tailwind v4's CSS-first config (no `tailwind.config.js`) vs. adding `@layer base` rules | Tailwind v4 uses `@import "tailwindcss"` in `app.css`; `@layer base {}` blocks are valid in this context. Verify by running `pnpm dev` and inspecting computed styles on `<ruby>` elements. |
-| `noUncheckedIndexedAccess` and array indexing in parser | Use `Array.prototype.map`, `for...of`, or optional chaining — never bare `array[i]` without a bounds check |
-| `exactOptionalPropertyTypes` and optional props on components | Define optional props as `prop?: T` and handle `undefined` explicitly; never pass `undefined` to a prop typed as `T \| undefined` without checking |
-| React controlled state initialization from `useActionData` | `useState` initializer runs once on mount; if action data changes without unmounting the component, use a ref to track "first error received" and call `setText` in a `useEffect` watching `actionData`. Alternatively, use a `key` prop on `InputArea` tied to a submission counter to force remount on each error. Document the chosen approach clearly. |
+| Conflict                                                                                | Resolution                                                                                                                                                                                                                                                                                                                                                 |
+| --------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Tailwind v4's CSS-first config (no `tailwind.config.js`) vs. adding `@layer base` rules | Tailwind v4 uses `@import "tailwindcss"` in `app.css`; `@layer base {}` blocks are valid in this context. Verify by running `pnpm dev` and inspecting computed styles on `<ruby>` elements.                                                                                                                                                                |
+| `noUncheckedIndexedAccess` and array indexing in parser                                 | Use `Array.prototype.map`, `for...of`, or optional chaining — never bare `array[i]` without a bounds check                                                                                                                                                                                                                                                 |
+| `exactOptionalPropertyTypes` and optional props on components                           | Define optional props as `prop?: T` and handle `undefined` explicitly; never pass `undefined` to a prop typed as `T \| undefined` without checking                                                                                                                                                                                                         |
+| React controlled state initialization from `useActionData`                              | `useState` initializer runs once on mount; if action data changes without unmounting the component, use a ref to track "first error received" and call `setText` in a `useEffect` watching `actionData`. Alternatively, use a `key` prop on `InputArea` tied to a submission counter to force remount on each error. Document the chosen approach clearly. |
 
 ### Risk Areas
 
-| Risk | Likelihood | Mitigation |
-|---|---|---|
-| GPT-4o-mini returns annotation string in unexpected format | Medium | Build parser to be resilient to malformed input; treat any non-empty string as worth attempting to parse; add E2E test with live API to catch prompt drift |
-| Prompt instability (model behavior changes over time) | Low (for MVP) | Snapshot test on `FURIGANA_SYSTEM_PROMPT` catches accidental prompt edits; use `gpt-4o-mini` with a pinned `model` parameter |
-| Ruby CSS rendering differences across browsers | Low (Chromium/Firefox/Safari all support ruby) | Playwright tests across multiple browser engines; `<rp>` fallback handles non-ruby browsers |
-| TypeScript strict mode rejecting patterns from online examples | Medium | All patterns in this document are written with strict mode compliance in mind; run `pnpm type-check` frequently during development |
-| `openai` package major version mismatch with this document | Low | Pin to the installed version; check SDK docs for the installed version before writing `client.ts` |
+| Risk                                                           | Likelihood                                     | Mitigation                                                                                                                                                 |
+| -------------------------------------------------------------- | ---------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| GPT-4o-mini returns annotation string in unexpected format     | Medium                                         | Build parser to be resilient to malformed input; treat any non-empty string as worth attempting to parse; add E2E test with live API to catch prompt drift |
+| Prompt instability (model behavior changes over time)          | Low (for MVP)                                  | Snapshot test on `FURIGANA_SYSTEM_PROMPT` catches accidental prompt edits; use `gpt-4o-mini` with a pinned `model` parameter                               |
+| Ruby CSS rendering differences across browsers                 | Low (Chromium/Firefox/Safari all support ruby) | Playwright tests across multiple browser engines; `<rp>` fallback handles non-ruby browsers                                                                |
+| TypeScript strict mode rejecting patterns from online examples | Medium                                         | All patterns in this document are written with strict mode compliance in mind; run `pnpm type-check` frequently during development                         |
+| `openai` package major version mismatch with this document     | Low                                            | Pin to the installed version; check SDK docs for the installed version before writing `client.ts`                                                          |
