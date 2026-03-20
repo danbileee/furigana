@@ -750,67 +750,67 @@ These tests require React testing library. Use `environment: "jsdom"` in Vitest 
 
 **Phase 1: Input Constants**
 
-- [ ] Create `app/constants/` directory if it does not exist
-- [ ] Create `app/constants/input.ts`
-- [ ] Export `MAX_INPUT_LENGTH = 10_000`
-- [ ] `pnpm type-check` passes
+- [x] Create `app/constants/` directory if it does not exist
+- [x] Create `app/constants/input.ts`
+- [x] Export `MAX_INPUT_LENGTH = 10_000`
+- [x] `pnpm type-check` passes
 
 **Phase 2: Textarea Installation**
 
-- [ ] Run `pnpx shadcn@latest add textarea --defaults`
-- [ ] Verify `app/components/ui/textarea.tsx` exists and exports `Textarea`
-- [ ] `pnpm type-check` passes
+- [x] Run `pnpx shadcn@latest add textarea --defaults`
+- [x] Verify `app/components/ui/textarea.tsx` exists and exports `Textarea`
+- [x] `pnpm type-check` passes
 
 **Phase 3: Furigana Service**
 
-- [ ] Create `app/services/furigana.ts`
-- [ ] Import `openaiClient`, prompts, parser
-- [ ] Implement `generateFurigana(text: string): Promise<FuriganaToken[]>`
-- [ ] Create `app/services/furigana.test.ts` with unit tests
-- [ ] Test: valid AI response → tokens returned
-- [ ] Test: empty response → throws
-- [ ] Test: API error → throws
-- [ ] `pnpm test app/services/furigana.test.ts` passes
+- [x] Create `app/services/furigana.ts`
+- [x] Import `openaiClient`, prompts, parser
+- [x] Implement `generateFurigana(text: string): Promise<FuriganaToken[]>`
+- [x] Create `app/services/furigana.test.ts` with unit tests
+- [x] Test: valid AI response → tokens returned
+- [x] Test: empty response → throws
+- [x] Test: API error → throws
+- [x] `pnpm test app/services/furigana.test.ts` passes
 
 **Phase 4: Home Route Form and Action**
 
-- [ ] Modify `app/routes/home.tsx`
-- [ ] Import `MAX_INPUT_LENGTH` from `~/constants/input` (no local redeclaration)
-- [ ] Define action types: `ActionSuccess`, `ActionError`
-- [ ] Implement `action()` function:
-  - [ ] Extract and validate `text` from `formData`
-  - [ ] Validate against `MAX_INPUT_LENGTH`
-  - [ ] Call `generateFurigana(text)` from service
-  - [ ] Return success or error object
-  - [ ] Catch errors and return generic error message
-- [ ] Implement component:
-  - [ ] Use `useNavigation()` for `isSubmitting` state
-  - [ ] Use `useActionData()` for error and success paths
-  - [ ] Derive `charCount`, `isOverLimit`, `isSubmitDisabled` using `MAX_INPUT_LENGTH`
-  - [ ] Render `<Form method="post">` (React Router component)
-  - [ ] Render `<Textarea>` with `aria-label`, `placeholder`, `maxLength={MAX_INPUT_LENGTH}`, `name`, `value`, `onChange`, `disabled`
-  - [ ] Render counter `<p>` with `{MAX_INPUT_LENGTH.toLocaleString()}` and conditional color
-  - [ ] Render error `<p role="alert">` when `errorMessage !== undefined`
-  - [ ] Render `<Button type="submit">` with spinner during submission
-  - [ ] Transition to `<ReadingView>` on success
-- [ ] Create `app/routes/home.test.ts` and `app/routes/home.test.tsx` with unit/component tests
-- [ ] Tests reference `MAX_INPUT_LENGTH` from `~/constants/input` — no hardcoded `10_000` or `10001`
-- [ ] `pnpm type-check` passes
-- [ ] `pnpm exec eslint app/routes/home.tsx` passes
+- [x] Modify `app/routes/home.tsx`
+- [x] Import `MAX_INPUT_LENGTH` from `~/constants/input` (no local redeclaration)
+- [x] Define action types: `ActionSuccess`, `ActionError`
+- [x] Implement `action()` function:
+  - [x] Extract and validate `text` from `formData`
+  - [x] Validate against `MAX_INPUT_LENGTH`
+  - [x] Call `generateFurigana(text)` from service
+  - [x] Return success or error object
+  - [x] Catch errors and return generic error message
+- [x] Implement component:
+  - [x] Use `useNavigation()` for `isSubmitting` state
+  - [x] Use `useActionData()` for error and success paths
+  - [x] Derive `charCount`, `isOverLimit`, `isSubmitDisabled` using `MAX_INPUT_LENGTH`
+  - [x] Render `<Form method="post">` (React Router component)
+  - [x] Render `<Textarea>` with `aria-label`, `placeholder`, `maxLength={MAX_INPUT_LENGTH}`, `name`, `value`, `onChange`, `disabled`
+  - [x] Render counter `<p>` with `{MAX_INPUT_LENGTH.toLocaleString()}` and conditional color
+  - [x] Render error `<p role="alert">` when `errorMessage !== undefined`
+  - [x] Render `<Button type="submit">` with spinner during submission
+  - [x] Transition to `<ReadingView>` on success
+- [x] Create `app/routes/home.test.ts` and `app/routes/home.test.tsx` with unit/component tests
+- [x] Tests reference `MAX_INPUT_LENGTH` from `~/constants/input` — no hardcoded `10_000` or `10001`
+- [x] `pnpm type-check` passes
+- [x] `pnpm exec eslint app/routes/home.tsx` passes
 
 **Phase 5: Verification**
 
-- [ ] `pnpm type-check` passes with zero errors
-- [ ] `pnpm exec eslint app/constants/input.ts app/services/ app/routes/home.tsx` passes
-- [ ] `pnpm build` succeeds with no errors
-- [ ] `pnpm dev` smoke test:
-  - [ ] Navigate to `/`
-  - [ ] Counter shows `0 / 10,000` on load
-  - [ ] Button is disabled on load
-  - [ ] Typing updates counter
-  - [ ] At 10,000 characters, counter turns red and button disables
-  - [ ] Submitting valid text transitions to `ReadingView` with `<ruby>` elements
-  - [ ] On error, form reappears with error message and text preserved
+- [x] `pnpm type-check` passes with zero errors
+- [x] `pnpm exec eslint app/constants/input.ts app/services/ app/routes/home.tsx` passes
+- [x] `pnpm build` succeeds with no errors
+- [x] `pnpm dev` smoke test:
+  - [x] Navigate to `/`
+  - [x] Counter shows `0 / 10,000` on load
+  - [x] Button is disabled on load
+  - [x] Typing updates counter
+  - [x] At 10,000 characters, counter turns red and button disables
+  - [x] Submitting valid text transitions to `ReadingView` with `<ruby>` elements
+  - [x] On error, form reappears with error message and text preserved
 
 ---
 
