@@ -753,42 +753,42 @@ This is out of scope for Task 10.
 
 ## Implementation Checklist
 
-- [ ] Phase 1: Add `route("api/furigana", "routes/api/furigana.ts")` to `app/routes.ts`
-- [ ] Phase 1: Run `pnpm type-check` to trigger typegen for `+types/api/furigana.d.ts`
-- [ ] Phase 2: Create `app/routes/api/furigana.ts` with `FuriganaRequest`, `FuriganaResponse`, `FuriganaError` type definitions
-- [ ] Phase 2: Import `type { FuriganaToken }` from `~/schema/furigana`
-- [ ] Phase 3: Add server-only imports (`openaiClient`, `FURIGANA_SYSTEM_PROMPT`, `buildUserMessage`, `sanitize`, `parseAnnotationString`)
-- [ ] Phase 3: Add `import type { Route } from "./+types/api/furigana"`
-- [ ] Phase 3: Implement `json` helper function
-- [ ] Phase 3: Implement `export async function action({ request }: Route.ActionArgs): Promise<Response>`
-- [ ] Phase 3: JSON body parse with `try/catch` returning 400 on parse failure
-- [ ] Phase 3: Body shape validation (object with string `text` field) returning 400
-- [ ] Phase 3: Empty-input validation returning 400
-- [ ] Phase 3: Over-limit validation (`> 10_000`) returning 400
-- [ ] Phase 3: `sanitize(text)` called before AI invocation
-- [ ] Phase 3: `openaiClient.chat.completions.create` called with `gpt-4o-mini`, system + user messages
-- [ ] Phase 3: Optional-chain guard on `choices[0]?.message.content`
-- [ ] Phase 3: `!content` guard returning 500
-- [ ] Phase 3: `parseAnnotationString(content)` called on valid content
-- [ ] Phase 3: Success path returns `json({ tokens } satisfies FuriganaResponse, 200)`
-- [ ] Phase 3: `try/catch` wraps AI call and parse; `catch` returns 500
-- [ ] Phase 3: Add `export const Component = () => null`
-- [ ] Phase 4: Create `app/routes/api/furigana.test.ts`
-- [ ] Phase 4: `vi.mock("~/lib/ai/client", ...)` with `create: vi.fn()` factory
-- [ ] Phase 4: `createJsonRequest` and `makeCompletionResponse` helpers
-- [ ] Phase 4: Test 1 — valid request returns 200 with tokens
-- [ ] Phase 4: Test 2 — empty text returns 400, AI not called
-- [ ] Phase 4: Test 3 — over-limit text returns 400, AI not called
-- [ ] Phase 4: Test 4 — AI error returns 500 with originalText
-- [ ] Phase 4: Test 5 — invalid JSON returns 400
-- [ ] Phase 4: Test 6 — null API content returns 500
-- [ ] Phase 4: Test 7 — empty choices array returns 500
-- [ ] Phase 4: Test 8 — exactly 10,000 chars accepted (boundary)
-- [ ] Phase 4: Test 9 — missing `text` field returns 400
-- [ ] Phase 5: `pnpm type-check` passes with zero errors
-- [ ] Phase 5: `pnpm exec eslint app/routes/api/furigana.ts app/routes/api/furigana.test.ts` passes
-- [ ] Phase 5: `pnpm test app/routes/api/furigana.test.ts` — all 9 tests pass
-- [ ] Phase 5: `pnpm build` succeeds with no client-bundle errors
+- [x] Phase 1: Add `route("api/furigana", "routes/api/furigana.ts")` to `app/routes.ts`
+- [x] Phase 1: Run `pnpm type-check` to trigger typegen for `+types/api/furigana.d.ts`
+- [x] Phase 2: Create `app/routes/api/furigana.ts` with `FuriganaRequest`, `FuriganaResponse`, `FuriganaError` type definitions
+- [x] Phase 2: Import `type { FuriganaToken }` from `~/schema/furigana`
+- [x] Phase 3: Add server-only imports (`openaiClient`, `FURIGANA_SYSTEM_PROMPT`, `buildUserMessage`, `sanitize`, `parseAnnotationString`)
+- [x] Phase 3: Add `import type { Route } from "./+types/api/furigana"`
+- [x] Phase 3: Implement `json` helper function
+- [x] Phase 3: Implement `export async function action({ request }: Route.ActionArgs): Promise<Response>`
+- [x] Phase 3: JSON body parse with `try/catch` returning 400 on parse failure
+- [x] Phase 3: Body shape validation (object with string `text` field) returning 400
+- [x] Phase 3: Empty-input validation returning 400
+- [x] Phase 3: Over-limit validation (`> 10_000`) returning 400
+- [x] Phase 3: `sanitize(text)` called before AI invocation
+- [x] Phase 3: `openaiClient.chat.completions.create` called with `gpt-4o-mini`, system + user messages
+- [x] Phase 3: Optional-chain guard on `choices[0]?.message.content`
+- [x] Phase 3: `!content` guard returning 500
+- [x] Phase 3: `parseAnnotationString(content)` called on valid content
+- [x] Phase 3: Success path returns `json({ tokens } satisfies FuriganaResponse, 200)`
+- [x] Phase 3: `try/catch` wraps AI call and parse; `catch` returns 500
+- [x] Phase 3: Add `export const Component = () => null`
+- [x] Phase 4: Create `app/routes/api/furigana.test.ts`
+- [x] Phase 4: `vi.mock("~/lib/ai/client", ...)` with `create: vi.fn()` factory
+- [x] Phase 4: `createJsonRequest` and `makeCompletionResponse` helpers
+- [x] Phase 4: Test 1 — valid request returns 200 with tokens
+- [x] Phase 4: Test 2 — empty text returns 400, AI not called
+- [x] Phase 4: Test 3 — over-limit text returns 400, AI not called
+- [x] Phase 4: Test 4 — AI error returns 500 with originalText
+- [x] Phase 4: Test 5 — invalid JSON returns 400
+- [x] Phase 4: Test 6 — null API content returns 500
+- [x] Phase 4: Test 7 — empty choices array returns 500
+- [x] Phase 4: Test 8 — exactly 10,000 chars accepted (boundary)
+- [x] Phase 4: Test 9 — missing `text` field returns 400
+- [x] Phase 5: `pnpm type-check` passes with zero errors
+- [x] Phase 5: `pnpm exec eslint app/routes/api/furigana.ts app/routes/api/furigana.test.ts` passes
+- [x] Phase 5: `pnpm test app/routes/api/furigana.test.ts` — all 9 tests pass
+- [x] Phase 5: `pnpm build` succeeds with no client-bundle errors
 
 ## Notes & Considerations
 
