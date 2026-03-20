@@ -133,9 +133,9 @@
           "8",
           "9"
         ],
-        "status": "in-progress",
+        "status": "done",
         "subtasks": [],
-        "updatedAt": "2026-03-20T08:08:33.252Z"
+        "updatedAt": "2026-03-20T09:57:20.235Z"
       },
       {
         "id": "11",
@@ -204,9 +204,9 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-20T08:08:33.253Z",
+      "lastModified": "2026-03-20T09:57:20.235Z",
       "taskCount": 15,
-      "completedCount": 9,
+      "completedCount": 10,
       "tags": [
         "master"
       ]
