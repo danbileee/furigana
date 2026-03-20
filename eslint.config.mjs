@@ -23,9 +23,7 @@ export default defineConfig([
       parser: tsParser,
       parserOptions: {
         projectService: {
-          allowDefaultProject: [
-            "app/routes/home.test.tsx",
-          ],
+          allowDefaultProject: ["app/routes/home.test.tsx"],
         },
         tsconfigRootDir: import.meta.dirname,
       },
@@ -41,16 +39,6 @@ export default defineConfig([
         "error",
         { prefer: "type-imports", fixStyle: "inline-type-imports" },
       ],
-    },
-  },
-
-  // NestJS / Node API overrides — decorators require looser rules
-  {
-    files: ["apps/api/**/*.ts"],
-    rules: {
-      "@typescript-eslint/no-unsafe-call": "off",
-      "@typescript-eslint/no-unsafe-member-access": "off",
-      "@typescript-eslint/no-unsafe-assignment": "off",
     },
   },
 

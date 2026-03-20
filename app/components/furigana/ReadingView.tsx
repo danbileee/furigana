@@ -1,4 +1,4 @@
-import type { FuriganaToken } from "~/schema/furigana";
+import type { FuriganaToken } from "~/schema/furigana.schema";
 
 type ReadingViewProps = {
   tokens: FuriganaToken[];

@@ -2,8 +2,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { MAX_INPUT_LENGTH } from "../constants/input";
-import type { FuriganaToken } from "../schema/furigana";
+import { MAX_INPUT_LENGTH } from "../constants/input.const";
+import type { FuriganaToken } from "../schema/furigana.schema";
+import { NON_JAPANESE_INPUT_ERROR } from "../constants/furigana.const";
 
 type ActionData =
   | {
@@ -108,6 +109,17 @@ describe("home route component", () => {
 
     expect(screen.getByRole("alert").textContent).toContain("Something went wrong");
     expect(getTextarea().value).toBe("日本語");
+  });
+
+  it("renders non-Japanese validation message and restores original input", () => {
+    mockUseActionData.mockReturnValue({
+      error: NON_JAPANESE_INPUT_ERROR,
+      originalText: "hello and にほんご",
+    });
+    render(<Home />);
+
+    expect(screen.getByRole("alert").textContent).toContain(NON_JAPANESE_INPUT_ERROR);
+    expect(getTextarea().value).toBe("hello and にほんご");
   });
 
   it("renders ReadingView when action succeeds", () => {

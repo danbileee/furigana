@@ -8,7 +8,7 @@ import {
   isTextToken,
   type FuriganaToken,
   type TextToken,
-} from "./furigana";
+} from "./furigana.schema";
 
 describe("TextTokenSchema", () => {
   it("parses a valid text token", () => {

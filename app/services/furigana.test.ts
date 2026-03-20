@@ -14,7 +14,8 @@ vi.mock("~/lib/ai/client", () => ({
   },
 }));
 
-import { generateFurigana } from "./furigana";
+import { GENERATION_INAVAILABLE_ERROR } from "~/constants/furigana.const";
+import { generateFurigana } from "./furigana.service";
 
 describe("generateFurigana", () => {
   beforeEach(() => {
@@ -48,7 +49,7 @@ describe("generateFurigana", () => {
       choices: [{ message: { content: "" } }],
     });
 
-    await expect(generateFurigana("日本語")).rejects.toThrow("Empty response from AI");
+    await expect(generateFurigana("日本語")).rejects.toThrow(GENERATION_INAVAILABLE_ERROR);
   });
 
   it("propagates API errors", async () => {

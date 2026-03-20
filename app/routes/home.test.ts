@@ -1,12 +1,13 @@
 import { vi } from "vitest";
-import { MAX_INPUT_LENGTH } from "~/constants/input";
-import type { FuriganaToken } from "~/schema/furigana";
+import { MAX_INPUT_LENGTH } from "~/constants/input.const";
+import type { FuriganaToken } from "~/schema/furigana.schema";
+import { NON_JAPANESE_INPUT_ERROR } from "~/constants/furigana.const";
 
 const { mockGenerateFurigana } = vi.hoisted(() => ({
   mockGenerateFurigana: vi.fn(),
 }));
 
-vi.mock("~/services/furigana", () => ({
+vi.mock("~/services/furigana.service", () => ({
   generateFurigana: mockGenerateFurigana,
 }));
 
@@ -50,18 +51,18 @@ describe("home action", () => {
     expect(mockGenerateFurigana).toHaveBeenCalledWith("日本語");
   });
 
-  it("keeps whitespace and forwards raw text to service", async () => {
+  it("trims whitespace and forwards sanitized text to service", async () => {
     const tokens: FuriganaToken[] = [{ type: "ruby", kanji: "日本語", yomi: "にほんご" }];
     mockGenerateFurigana.mockResolvedValueOnce(tokens);
 
     const rawInput = " 日本語 ";
     await action(createActionArgs(createFormRequest(rawInput)));
 
-    expect(mockGenerateFurigana).toHaveBeenCalledWith(rawInput);
+    expect(mockGenerateFurigana).toHaveBeenCalledWith("日本語");
   });
 
-  it("returns an error for empty text", async () => {
-    const result = await action(createActionArgs(createFormRequest("")));
+  it("returns an error for empty text after trimming", async () => {
+    const result = await action(createActionArgs(createFormRequest("   ")));
 
     expect(result).toEqual({
       error: "Please enter some Japanese text.",
@@ -70,8 +71,20 @@ describe("home action", () => {
     expect(mockGenerateFurigana).not.toHaveBeenCalled();
   });
 
+  it("returns an error when input has no meaningful Japanese content", async () => {
+    const input = "This is an English paragraph only.";
+
+    const result = await action(createActionArgs(createFormRequest(input)));
+
+    expect(result).toEqual({
+      error: NON_JAPANESE_INPUT_ERROR,
+      originalText: input,
+    });
+    expect(mockGenerateFurigana).not.toHaveBeenCalled();
+  });
+
   it("returns an error for over-limit text", async () => {
-    const overLimitText = "あ".repeat(MAX_INPUT_LENGTH + 1);
+    const overLimitText = "漢".repeat(MAX_INPUT_LENGTH + 1);
     const result = await action(createActionArgs(createFormRequest(overLimitText)));
 
     expect(result).toEqual({
@@ -89,6 +102,17 @@ describe("home action", () => {
     expect(result).toEqual({
       error: "Something went wrong. Please try again.",
       originalText: "日本語",
+    });
+  });
+
+  it("returns non-Japanese error when service throws validation error", async () => {
+    mockGenerateFurigana.mockRejectedValueOnce(new Error(NON_JAPANESE_INPUT_ERROR));
+
+    const result = await action(createActionArgs(createFormRequest("hello and 日本語")));
+
+    expect(result).toEqual({
+      error: "Something went wrong. Please try again.",
+      originalText: "hello and 日本語",
     });
   });
 
@@ -110,9 +134,18 @@ describe("home action", () => {
     const result = await action(createActionArgs(createFormRequestWithData(formData)));
 
     expect(result).toEqual({
-      error: "Please enter some Japanese text.",
-      originalText: "",
+      error: NON_JAPANESE_INPUT_ERROR,
+      originalText: "[object File]",
     });
     expect(mockGenerateFurigana).not.toHaveBeenCalled();
+  });
+
+  it("sanitizes potentially unsafe tags before validation and generation", async () => {
+    const tokens: FuriganaToken[] = [{ type: "ruby", kanji: "日本語", yomi: "にほんご" }];
+    mockGenerateFurigana.mockResolvedValueOnce(tokens);
+
+    await action(createActionArgs(createFormRequest("<script>日本語</script>")));
+
+    expect(mockGenerateFurigana).toHaveBeenCalledWith("日本語");
   });
 });

@@ -1,14 +1,16 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { Form, useActionData, useNavigation } from "react-router";
+import type { Route } from "./+types/home";
 import { ReadingView } from "~/components/furigana/ReadingView";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
-import { MAX_INPUT_LENGTH } from "~/constants/input";
+import { MAX_INPUT_LENGTH } from "~/constants/input.const";
 import { cn } from "~/lib/utils";
-import type { FuriganaToken } from "~/schema/furigana";
-import { generateFurigana } from "~/services/furigana";
-import type { Route } from "./+types/home";
+import type { FuriganaToken } from "~/schema/furigana.schema";
+import { generateFurigana } from "~/services/furigana.service";
+import { sanitizeUserInput } from "~/lib/furigana/sanitize";
+import { validateJapaneseInput } from "~/lib/furigana/validate";
 
 type ActionSuccess = {
   tokens: FuriganaToken[];
@@ -35,25 +37,20 @@ export function meta(_: Route.MetaArgs) {
 
 export async function action({ request }: Route.ActionArgs): Promise<ActionData> {
   const formData = await request.formData();
-  const textEntry = formData.get("text");
+  const text = formData.get("text")?.toString()?.trim() ?? "";
+  const sanitized = sanitizeUserInput(text);
+  const error = validateJapaneseInput(sanitized);
 
-  if (typeof textEntry !== "string" || textEntry.length === 0) {
-    return { error: "Please enter some Japanese text.", originalText: "" };
-  }
-
-  if (textEntry.length > MAX_INPUT_LENGTH) {
-    return {
-      error: `Text exceeds ${MAX_INPUT_LENGTH.toLocaleString()} character limit.`,
-      originalText: textEntry,
-    };
+  if (error !== undefined) {
+    return { error, originalText: sanitized };
   }
 
   try {
-    const tokens = await generateFurigana(textEntry);
+    const tokens = await generateFurigana(sanitized);
     return { tokens };
   } catch (error) {
     console.error("Furigana generation error:", error);
-    return { error: GENERIC_SERVER_ERROR, originalText: textEntry };
+    return { error: GENERIC_SERVER_ERROR, originalText: sanitized };
   }
 }
 
@@ -66,25 +63,31 @@ export default function Home() {
     actionData !== undefined && "error" in actionData ? actionData.error : undefined;
   const actionOriginalText =
     actionData !== undefined && "originalText" in actionData ? actionData.originalText : "";
+  const showReadingView = actionData !== undefined && "tokens" in actionData;
 
   const [text, setText] = useState<string>(actionOriginalText);
-
-  useEffect(() => {
-    setText(actionOriginalText);
-  }, [actionOriginalText]);
 
   const charCount = text.length;
   const isAtOrOverLimit = charCount >= MAX_INPUT_LENGTH;
   const isOverLimit = charCount > MAX_INPUT_LENGTH;
   const isSubmitDisabled = charCount === 0 || isOverLimit || isSubmitting;
 
-  if (actionData !== undefined && "tokens" in actionData) {
+  useEffect(() => {
+    setText(actionOriginalText);
+  }, [actionOriginalText]);
+
+  if (showReadingView) {
     return <ReadingView tokens={actionData.tokens} />;
   }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 p-8">
-      <h1 className="text-3xl font-bold">Furigana</h1>
+      <div className="flex flex-col items-center justify-center gap-2">
+        <h1 className="text-center text-3xl font-bold">👋 Welcome!</h1>
+        <p className="text-center text-lg">
+          Paste your Japanese paragraph below to get the most accurate furigana.
+        </p>
+      </div>
 
       <Form ref={formRef} method="post" className="flex w-full flex-col gap-4">
         <Textarea

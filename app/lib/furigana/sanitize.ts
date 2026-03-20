@@ -1,4 +1,4 @@
-export function sanitize(input: string): string {
+export function sanitizeUserInput(input: string): string {
   return (
     input
       // Remove HTML tags (opening and closing, with optional whitespace around tag name)

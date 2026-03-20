@@ -1,4 +1,4 @@
-import type { FuriganaToken } from "~/schema/furigana";
+import type { FuriganaToken } from "~/schema/furigana.schema";
 
 type ParserState = "text" | "yomi";
 const KANJI_CHAR_REGEX = /[\p{Script=Han}々〆ヶ]/u;

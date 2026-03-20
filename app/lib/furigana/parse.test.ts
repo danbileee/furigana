@@ -1,5 +1,5 @@
-import { MAX_INPUT_LENGTH } from "~/constants/input";
-import { parseAnnotationString } from "~/lib/furigana/parser";
+import { MAX_INPUT_LENGTH } from "~/constants/input.const";
+import { parseAnnotationString } from "~/lib/furigana/parse";
 
 describe("parseAnnotationString", () => {
   describe("base cases", () => {
