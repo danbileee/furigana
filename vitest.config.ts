@@ -13,7 +13,8 @@ export default mergeConfig(
     test: {
       globals: true,
       environment: "node",
-      include: ["app/**/*.test.ts"],
+      setupFiles: ["./app/test/setup.ts"],
+      include: ["app/**/*.test.ts", "app/**/*.test.tsx"],
       exclude: ["e2e/**/*"],
       coverage: {
         provider: "v8",

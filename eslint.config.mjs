@@ -23,7 +23,9 @@ export default defineConfig([
       parser: tsParser,
       parserOptions: {
         projectService: {
-          allowDefaultProject: ["packages/interface/tsup.config.ts", "apps/api/test/*.ts"],
+          allowDefaultProject: [
+            "app/routes/home.test.tsx",
+          ],
         },
         tsconfigRootDir: import.meta.dirname,
       },
