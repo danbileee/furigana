@@ -280,29 +280,29 @@ pnpm build
 
 ### Phase 1 — Create the Prompt Module
 
-- [ ] Create `app/lib/ai/prompt.ts`
-- [ ] Export `FURIGANA_SYSTEM_PROMPT` as a named `const` string
-- [ ] Include server-only comment header
-- [ ] Prompt instructs model to annotate kanji in `漢字{よみ}` format
-- [ ] Prompt returns only annotated string (no markdown, no explanations)
-- [ ] At least 4 few-shot examples (compound kanji, mixed content, pure hiragana, numbers)
-- [ ] Export `buildUserMessage(text: string): string` as named function (pass-through)
-- [ ] No default export, no imports from `openai` or `~/lib/ai/client`
-- [ ] `pnpm type-check` passes on `app/lib/ai/prompt.ts`
-- [ ] `pnpm exec eslint app/lib/ai/prompt.ts` reports no errors
+- [x] Create `app/lib/ai/prompt.ts`
+- [x] Export `FURIGANA_SYSTEM_PROMPT` as a named `const` string
+- [x] Include server-only comment header
+- [x] Prompt instructs model to annotate kanji in `漢字{よみ}` format
+- [x] Prompt returns only annotated string (no markdown, no explanations)
+- [x] At least 4 few-shot examples (compound kanji, mixed content, pure hiragana, numbers)
+- [x] Export `buildUserMessage(text: string): string` as named function (pass-through)
+- [x] No default export, no imports from `openai` or `~/lib/ai/client`
+- [x] `pnpm type-check` passes on `app/lib/ai/prompt.ts`
+- [x] `pnpm exec eslint app/lib/ai/prompt.ts` reports no errors
 
 ### Phase 2 — Write Unit Tests
 
-- [ ] Create `app/lib/ai/prompt.test.ts`
-- [ ] No explicit `describe`/`it`/`expect` imports (globals)
-- [ ] Test: returns plain Japanese text unchanged
-- [ ] Test: returns already-annotated string unchanged
-- [ ] Test: returns empty string unchanged
-- [ ] `pnpm test app/lib/ai/prompt.test.ts` passes
+- [x] Create `app/lib/ai/prompt.test.ts`
+- [x] No explicit `describe`/`it`/`expect` imports (globals)
+- [x] Test: returns plain Japanese text unchanged
+- [x] Test: returns already-annotated string unchanged
+- [x] Test: returns empty string unchanged
+- [x] `pnpm test app/lib/ai/prompt.test.ts` passes
 
 ### Phase 3 — Verify Integration Contract
 
-- [ ] Cross-check few-shot examples against `parseAnnotationString` in `app/lib/furigana/parser.ts`
-- [ ] Confirm no client-side import of `~/lib/ai/prompt`
-- [ ] `pnpm build` succeeds
-- [ ] `pnpm type-check` passes across whole project
+- [x] Cross-check few-shot examples against `parseAnnotationString` in `app/lib/furigana/parser.ts`
+- [x] Confirm no client-side import of `~/lib/ai/prompt`
+- [x] `pnpm build` succeeds
+- [x] `pnpm type-check` passes across whole project
