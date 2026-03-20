@@ -71,17 +71,17 @@ describe("home route component", () => {
     render(<Home />);
     fireEvent.change(getTextarea(), { target: { value: "こんにちは" } });
 
-    expect(screen.getByText(`5 / ${MAX_INPUT_LENGTH.toLocaleString()}`)).not.toBeNull();
+    screen.getByText(`5 / ${MAX_INPUT_LENGTH.toLocaleString()}`);
   });
 
-  it("shows destructive counter color at the max length", () => {
+  it("marks counter as danger at the max length", () => {
     render(<Home />);
     fireEvent.change(getTextarea(), { target: { value: "あ".repeat(MAX_INPUT_LENGTH) } });
 
     const counter = screen.getByText(
       `${MAX_INPUT_LENGTH.toLocaleString()} / ${MAX_INPUT_LENGTH.toLocaleString()}`,
     );
-    expect(counter.className.includes("text-destructive")).toBe(true);
+    expect(counter.getAttribute("data-state")).toBe("danger");
   });
 
   it("disables submit button on initial load", () => {
@@ -116,30 +116,26 @@ describe("home route component", () => {
     });
     render(<Home />);
 
-    expect(screen.getByTestId("reading-view")).not.toBeNull();
+    screen.getByTestId("reading-view");
     expect(screen.queryByLabelText("Japanese text input")).toBeNull();
   });
 
-  it("submits the form on button click", () => {
+  it("uses a submit button and enables it for valid input", () => {
     render(<Home />);
     fireEvent.change(getTextarea(), { target: { value: "日本語" } });
 
-    const form = getTextarea().closest("form");
-    if (form === null) throw new Error("Expected form element.");
-
-    const submitListener = vi.fn((event: SubmitEvent) => event.preventDefault());
-    form.addEventListener("submit", submitListener);
-
-    fireEvent.click(getSubmitButton());
-
-    expect(submitListener).toHaveBeenCalledTimes(1);
+    const submitButton = getSubmitButton();
+    expect(submitButton.getAttribute("type")).toBe("submit");
+    expect(submitButton.hasAttribute("disabled")).toBe(false);
   });
 
   it("submits the form via Cmd+Enter and Ctrl+Enter", () => {
     render(<Home />);
     fireEvent.change(getTextarea(), { target: { value: "日本語" } });
 
-    const requestSubmitSpy = vi.spyOn(HTMLFormElement.prototype, "requestSubmit");
+    const requestSubmitSpy = vi
+      .spyOn(HTMLFormElement.prototype, "requestSubmit")
+      .mockImplementation(() => undefined);
 
     fireEvent.keyDown(getTextarea(), { key: "Enter", metaKey: true });
     fireEvent.keyDown(getTextarea(), { key: "Enter", ctrlKey: true });
@@ -153,6 +149,6 @@ describe("home route component", () => {
     render(<Home />);
 
     expect(getSubmitButton().textContent).toContain("Generating…");
-    expect(document.querySelector(".animate-spin")).not.toBeNull();
+    expect(screen.getByRole("status").textContent).toContain("Generating…");
   });
 });

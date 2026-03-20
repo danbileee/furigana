@@ -25,8 +25,11 @@ const GENERIC_SERVER_ERROR = "Something went wrong. Please try again.";
 
 export function meta(_: Route.MetaArgs) {
   return [
-    { title: "Furigana" },
-    { name: "description", content: "Generate furigana annotations for Japanese text" },
+    { title: "Furigana Assistant" },
+    {
+      name: "description",
+      content: "Generate AI-powered furigana annotations for Japanese paragraphes",
+    },
   ];
 }
 
@@ -102,6 +105,7 @@ export default function Home() {
         />
 
         <p
+          data-state={isAtOrOverLimit ? "danger" : "default"}
           className={cn(
             "text-right text-sm",
             isAtOrOverLimit ? "text-destructive" : "text-muted-foreground",
@@ -119,8 +123,10 @@ export default function Home() {
         <Button type="submit" disabled={isSubmitDisabled} className="w-full">
           {isSubmitting ? (
             <>
-              <Loader2 className="animate-spin" />
-              Generating…
+              <Loader2 className="animate-spin" aria-hidden />
+              <span role="status" aria-live="polite">
+                Generating…
+              </span>
             </>
           ) : (
             "Generate Furigana"

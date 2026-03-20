@@ -12,13 +12,17 @@ vi.mock("~/services/furigana", () => ({
 
 import { action } from "./home";
 
-function createFormRequest(text: string): Request {
-  const formData = new FormData();
-  formData.set("text", text);
+function createFormRequestWithData(formData: FormData): Request {
   return new Request("http://localhost/", {
     method: "POST",
     body: formData,
   });
+}
+
+function createFormRequest(text: string): Request {
+  const formData = new FormData();
+  formData.set("text", text);
+  return createFormRequestWithData(formData);
 }
 
 function createActionArgs(request: Request): Parameters<typeof action>[0] {
@@ -41,8 +45,19 @@ describe("home action", () => {
 
     const result = await action(createActionArgs(createFormRequest("日本語")));
 
+    expect(result).toMatchObject({ tokens: expect.any(Array) });
     expect(result).toEqual({ tokens });
     expect(mockGenerateFurigana).toHaveBeenCalledWith("日本語");
+  });
+
+  it("keeps whitespace and forwards raw text to service", async () => {
+    const tokens: FuriganaToken[] = [{ type: "ruby", kanji: "日本語", yomi: "にほんご" }];
+    mockGenerateFurigana.mockResolvedValueOnce(tokens);
+
+    const rawInput = " 日本語 ";
+    await action(createActionArgs(createFormRequest(rawInput)));
+
+    expect(mockGenerateFurigana).toHaveBeenCalledWith(rawInput);
   });
 
   it("returns an error for empty text", async () => {
@@ -75,5 +90,29 @@ describe("home action", () => {
       error: "Something went wrong. Please try again.",
       originalText: "日本語",
     });
+  });
+
+  it("returns an error when text field is missing", async () => {
+    const formData = new FormData();
+    const result = await action(createActionArgs(createFormRequestWithData(formData)));
+
+    expect(result).toEqual({
+      error: "Please enter some Japanese text.",
+      originalText: "",
+    });
+    expect(mockGenerateFurigana).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when text field is not a string", async () => {
+    const formData = new FormData();
+    formData.set("text", new File(["dummy"], "dummy.txt", { type: "text/plain" }));
+
+    const result = await action(createActionArgs(createFormRequestWithData(formData)));
+
+    expect(result).toEqual({
+      error: "Please enter some Japanese text.",
+      originalText: "",
+    });
+    expect(mockGenerateFurigana).not.toHaveBeenCalled();
   });
 });
