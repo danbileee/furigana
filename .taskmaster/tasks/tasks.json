@@ -117,8 +117,9 @@
         "testStrategy": "Create `app/lib/ai/prompts.test.ts` with snapshot test for FURIGANA_SYSTEM_PROMPT. Test buildUserMessage returns input unchanged. Run `pnpm test app/lib/ai/prompts.test.ts`.",
         "priority": "high",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [],
+        "updatedAt": "2026-03-20T07:45:07.748Z"
       },
       {
         "id": "10",
@@ -202,7 +203,7 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-19T13:19:06.124Z",
+      "lastModified": "2026-03-20T07:45:07.749Z",
       "taskCount": 15,
       "completedCount": 8,
       "tags": [
