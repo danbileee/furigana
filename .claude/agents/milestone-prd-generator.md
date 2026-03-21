@@ -138,7 +138,7 @@ Include a section analyzing:
 
 ### File Path
 
-- Save to `.taskmaster/docs/plans/{date-flag} {scope-name}/milestones/{milestone-number}-prd-{Milestone Name}.md` where:
+- Save to `.taskmaster/docs/plans/{date-flag} {scope-name}/milestones/{milestone-number}-{Milestone Name}/prd.md` where:
   - `date-flag` is supplied by the user (e.g., `2026-03-17`) and specify the exact matching directory by using the date flag as a prefix
   - `milestone-number` is the milestone's number (e.g., `1`)
   - `Milestone Name` is the milestone name in Pascal Case with spaces preserved (e.g., `Core Reader UI`)

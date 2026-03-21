@@ -243,7 +243,7 @@ Generate a markdown document with the following structure:
    - Validate that type strictness rules are maintained
    - Confirm all `Needs Review` items are clearly described with actionable next steps
 
-8. **Save to Correct Location**: Once the user provides the date flag, locate the matching directory under `.taskmaster/docs/plans/` (accounting for suffixes), and save the output to `{matching-directory}/milestones/{milestone-number}-task-{task-number}-{Task-Name}.md`.
+8. **Save to Correct Location**: Once the user provides the date flag, locate the matching directory under `.taskmaster/docs/plans/` (accounting for suffixes), and save the output to `{matching-directory}/milestones/{milestone-number}-{Milestone Name}/task-{task-number}-{Task-Name}.md`.
 
 ## Chain-of-Thought Reasoning
 
