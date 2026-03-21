@@ -484,26 +484,26 @@ await expect(errorAlert(page)).toHaveText(GENERIC_SERVER_ERROR);
 
 ## Implementation Checklist
 
-- [ ] Create `app/constants/error.const.ts` and export `GENERIC_SERVER_ERROR = 'Something went wrong. Please try again.'`
-- [ ] Remove the module-local `GENERIC_SERVER_ERROR` declaration from `app/routes/home.tsx`
-- [ ] Add `import { GENERIC_SERVER_ERROR } from '~/constants/error.const'` to `app/routes/home.tsx`
-- [ ] Run `pnpm type-check` and `pnpm exec eslint app/routes/home.tsx` after updating the import to confirm no regressions
-- [ ] Create `e2e/generation.spec.ts` with `import { test, expect } from '@playwright/test'`
-- [ ] Import `NON_JAPANESE_INPUT_ERROR` from `~/constants/furigana.const` (or relative path if alias not configured in Playwright)
-- [ ] Import `GENERIC_SERVER_ERROR` from `~/constants/error.const` in `e2e/generation.spec.ts`
-- [ ] Add locator helper functions (`textarea`, `submitButton`, `charCounter`, `errorAlert`)
-- [ ] Write Test 1: happy path generation with `waitForURL` and ruby element assertion
-- [ ] Write Test 2: `Meta+Enter` keyboard shortcut
-- [ ] Write Test 3: submit button disabled on initial load
-- [ ] Write Test 4: button re-disabled after textarea clear
-- [ ] Write Test 5: danger counter at 10,000 characters with correct button state
-- [ ] Write Test 6: non-Japanese validation error with `toHaveText(NON_JAPANESE_INPUT_ERROR)` and text preservation
-- [ ] Write Test 7: `test.fixme` stub for server error path referencing `GENERIC_SERVER_ERROR` constant (not a literal string)
-- [ ] Add `test.skip(!process.env['OPENAI_API_KEY'], ...)` guard to Tests 1 and 2
-- [ ] Run `pnpm test:e2e --headed` locally to visually verify all passing tests
-- [ ] Run `pnpm type-check` to confirm no TypeScript errors in `e2e/generation.spec.ts`
-- [ ] Run `pnpm exec eslint e2e/generation.spec.ts` to confirm no lint errors
-- [ ] Verify `pnpm test:e2e` completes without failures in a clean terminal (no dev server running, `reuseExistingServer: true` picks it up or starts it)
+- [x] Create `app/constants/error.const.ts` and export `GENERIC_SERVER_ERROR = 'Something went wrong. Please try again.'`
+- [x] Remove the module-local `GENERIC_SERVER_ERROR` declaration from `app/routes/home.tsx`
+- [x] Add `import { GENERIC_SERVER_ERROR } from '~/constants/error.const'` to `app/routes/home.tsx`
+- [x] Run `pnpm type-check` and `pnpm exec eslint app/routes/home.tsx` after updating the import to confirm no regressions
+- [x] Create `e2e/generation.spec.ts` with `import { test, expect } from '@playwright/test'`
+- [x] Import `NON_JAPANESE_INPUT_ERROR` from `~/constants/furigana.const` (or relative path if alias not configured in Playwright)
+- [x] Import `GENERIC_SERVER_ERROR` from `~/constants/error.const` in `e2e/generation.spec.ts`
+- [x] Add locator helper functions (`textarea`, `submitButton`, `charCounter`, `errorAlert`)
+- [x] Write Test 1: happy path generation with `waitForURL` and ruby element assertion
+- [x] Write Test 2: `Meta+Enter` keyboard shortcut
+- [x] Write Test 3: submit button disabled on initial load
+- [x] Write Test 4: button re-disabled after textarea clear
+- [x] Write Test 5: danger counter at 10,000 characters with correct button state
+- [x] Write Test 6: non-Japanese validation error with `toHaveText(NON_JAPANESE_INPUT_ERROR)` and text preservation
+- [x] Write Test 7: `test.fixme` stub for server error path referencing `GENERIC_SERVER_ERROR` constant (not a literal string)
+- [x] Add `test.skip(!process.env['OPENAI_API_KEY'], ...)` guard to Tests 1 and 2
+- [x] Run `pnpm test:e2e --headed` locally to visually verify all passing tests
+- [x] Run `pnpm type-check` to confirm no TypeScript errors in `e2e/generation.spec.ts`
+- [x] Run `pnpm exec eslint e2e/generation.spec.ts` to confirm no lint errors
+- [x] Verify `pnpm test:e2e` completes without failures in a clean terminal (no dev server running, `reuseExistingServer: true` picks it up or starts it)
 
 ---
 

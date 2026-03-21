@@ -39,6 +39,14 @@ Key patterns observed during Task 6 and Task 7 reviews:
 - `app/lib/axios/` — pre-configured Axios instance
 - `app/schema/` — Zod schemas and inferred types
 
+## E2E Test patterns (Task 15)
+
+- Playwright alias resolution: `~/` imports in `e2e/` work via `tsconfig.json` `paths` without any extra Playwright config — `tsconfigPaths()` in `vite.config.ts` handles it at runtime.
+- `charCounter` locator `[data-state]` is unambiguous on the home page: `Button` emits `data-disabled` (base-ui), `Textarea` emits `data-slot`. Only the `<p>` counter uses `data-state`.
+- Happy path and keyboard shortcut tests must be guarded with `test.skip(!process.env['OPENAI_API_KEY'], ...)` — all other tests are API-key-free.
+- `consumeTokens` deletes the entry after one read — never navigate to `/furigana/:id` twice in the same test.
+- Server error path (Test 7) is a `test.fixme` stub because Playwright `page.route` cannot intercept server-side Node.js HTTP. Correct approach: dedicated Playwright project with `OPENAI_API_KEY=invalid`.
+
 ## Sanitization pattern (Task 7)
 
 - `sanitize()` in `app/lib/ai/sanitize.ts` — pure, synchronous, no imports, three chained `.replace()` calls.
