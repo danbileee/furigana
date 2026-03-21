@@ -202,13 +202,14 @@
           "3",
           "14"
         ],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [],
+        "updatedAt": "2026-03-21T08:08:51.623Z"
       }
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-21T07:59:32.039Z",
+      "lastModified": "2026-03-21T08:08:51.625Z",
       "taskCount": 15,
       "completedCount": 14,
       "tags": [
