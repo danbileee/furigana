@@ -63,7 +63,7 @@ You are a code reviewer and release coordinator. Your task is to create a well-s
 5. **Populate the template**:
    - **Summary**: Read recent commits and the stat diff. Write one clear paragraph explaining why these changes were made
    - **Changes**: Extract 3–5 meaningful bullet points from the commits and diff (focus on what changed, not file names)
-   - **Type of Change**: Check the boxes that apply based on commit types (feat → Feature, fix → Bug fix, etc.)
+   - **Checklists**: List up the implementation checklists that are done in this task
    - **Test Plan**: Infer from the changes what a reviewer should test. If it's a chore/docs-only PR, write "N/A"
    - **Assignee**: Always set to `danbileee` (the project author)
    - **Base branch**: Prefer the latest `release/*` remote branch; fall back to the repo default branch if none exists
