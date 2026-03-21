@@ -1,0 +1,133 @@
+{
+	"meta": {
+		"generatedAt": "2026-03-21T11:44:41.857Z",
+		"tasksAnalyzed": 15,
+		"totalTasks": 15,
+		"analysisCount": 15,
+		"thresholdScore": 5,
+		"projectName": "Task Master",
+		"usedResearch": true
+	},
+	"complexityAnalysis": [
+		{
+			"taskId": 1,
+			"taskTitle": "Set up Turso database and Drizzle ORM foundation",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Install npm packages (@libsql/client, drizzle-orm, drizzle-kit), 2) Create Drizzle schema file (app/lib/db/schema.ts) with furiganas table and indexes, 3) Create Drizzle client singleton (app/lib/db/client.ts) with libSQL configuration, 4) Create drizzle.config.ts and update .env.example, then generate and apply initial migration",
+			"reasoning": "This is a greenfield database setup task. No existing db/ directory exists in app/lib/. The task involves installing 3 packages (2 runtime, 1 dev), creating 2 new TypeScript files with well-defined code from the task details, creating a config file, updating .env.example, and running migration commands. The project uses strict TypeScript (exactOptionalPropertyTypes, noUncheckedIndexedAccess) which adds some complexity to schema typing. However, the task provides complete code snippets making implementation straightforward. Testing requires setting up in-memory SQLite which is well-documented for Drizzle."
+		},
+		{
+			"taskId": 2,
+			"taskTitle": "Create generic pagination and furigana Zod schemas",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Create app/schema/pagination.schema.ts with CursorSchema and generic PaginationResultsSchema factory function, 2) Extend existing app/schema/furigana.schema.ts with FuriganaRowSchema and FuriganaInsertSchema using drizzle-orm/zod integration, 3) Add FuriganaSidebarSchema and FuriganaPaginationResultsSchema with type exports",
+			"reasoning": "The existing furigana.schema.ts has 40 lines with TextTokenSchema, RubyTokenSchema, and FuriganaTokenSchema. This task extends it with database-related schemas. The project already uses Zod v4 with strict patterns. Creating a generic pagination schema factory requires TypeScript generics knowledge. The drizzle-orm/zod integration (createSelectSchema, createInsertSchema) is straightforward but needs careful type refinement to work with the strict tsconfig (exactOptionalPropertyTypes). Moderate complexity due to generic type handling."
+		},
+		{
+			"taskId": 3,
+			"taskTitle": "Implement cursor-based pagination query functions",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Create app/lib/db/queries.ts with insertFurigana function, 2) Implement getFuriganaById with soft-delete filtering, 3) Implement cursor decoding/encoding helpers with Base64 and JSON, 4) Implement listFuriganas with cursor-based pagination logic including composite cursor comparison, 5) Add total count query and hasMore calculation with proper typing",
+			"reasoning": "Cursor-based pagination with composite keys (createdAt, id) is moderately complex. The task involves Drizzle ORM query building with multiple conditions (lt, or, and, eq, isNull), cursor encoding/decoding with Base64+JSON, and SUBSTR SQL function for rawTextSnippet. The strict TypeScript config requires careful handling of potential undefined values (noUncheckedIndexedAccess). The pagination logic with 'fetch N+1 to detect hasMore' pattern requires careful implementation. Testing cursor stability adds complexity."
+		},
+		{
+			"taskId": 4,
+			"taskTitle": "Update furigana.service.ts to return annotation string",
+			"complexityScore": 2,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Simple modification: Update generateFurigana return type to include both annotationString and tokens, then update the single existing test file to expect the new return shape",
+			"reasoning": "This is a minimal change to an existing 84-line service. The current implementation already stores annotationString in a variable (line 76) before parsing. The change is simply returning { annotationString, tokens } instead of just tokens. One test file (furigana.service.test.ts, 62 lines) needs updating to destructure the new return shape. This is a breaking change but very localized - only home.tsx action calls this function. Extremely low complexity."
+		},
+		{
+			"taskId": 5,
+			"taskTitle": "Update home.tsx action to persist to Turso",
+			"complexityScore": 3,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single file modification: Update home.tsx action to use insertFurigana instead of setTokens, destructure generateFurigana result, and redirect with persisted ID",
+			"reasoning": "The existing home.tsx action (lines 32-51) has a clear structure. Changes involve: 1) Replace setTokens import with insertFurigana, 2) Destructure { annotationString, tokens } from generateFurigana, 3) Call insertFurigana with the entry data, 4) Keep existing redirect logic. The existing test file (146 lines) mocks react-router and components, and will need minimal updates to mock insertFurigana. Low complexity as it's swapping one storage mechanism for another with the same redirect pattern."
+		},
+		{
+			"taskId": 6,
+			"taskTitle": "Update furigana.$id.tsx loader to read from Turso",
+			"complexityScore": 3,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single file modification: Replace consumeTokens with getFuriganaById and parseAnnotationString, add proper 404 error handling, and update the component to remove main wrapper",
+			"reasoning": "The existing furigana.$id.tsx (46 lines) has a simple loader using consumeTokens. Changes involve: 1) Replace import with getFuriganaById and parseAnnotationString (already exists in app/lib/furigana/parse.ts), 2) Update loader to fetch by ID and parse annotationString, 3) Throw 404 for null entries using react-router's data() helper, 4) Remove main wrapper from component. The existing test file (143 lines) needs updating to mock getFuriganaById instead of useLoaderData. Straightforward refactor."
+		},
+		{
+			"taskId": 7,
+			"taskTitle": "Delete token-storage.service.ts and update tests",
+			"complexityScore": 2,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Deletion task: Remove token-storage.service.ts and its test file, verify no remaining imports via grep, run type-check and tests to confirm",
+			"reasoning": "This is a cleanup task. Two files to delete: token-storage.service.ts (25 lines) and token-storage.service.test.ts (91 lines). After Tasks 5 and 6 are complete, no imports should remain. Simple verification with grep command. Running pnpm type-check and pnpm test confirms clean removal. Minimal complexity."
+		},
+		{
+			"taskId": 8,
+			"taskTitle": "Install TanStack Query and create API client layer",
+			"complexityScore": 4,
+			"recommendedSubtasks": 3,
+			"expansionPrompt": "Break down into: 1) Install @tanstack/react-query package, 2) Create app/lib/api/furiganas.ts with fetchFuriganaList function using axios instance and Zod validation, 3) Add fetchFuriganaById function with FuriganaRowSchema validation and create test file with axios-mock-adapter",
+			"reasoning": "The project already has axios configured (app/lib/axios/instance.ts, 16 lines) with createAxiosInstance factory. This task creates a new API client layer using the existing axios instance and Zod schemas from Task 2. The implementation is straightforward - two async functions that call axios.get and validate with Zod. Testing with axios-mock-adapter is a common pattern. Moderate complexity due to setting up proper Zod validation that matches strict TypeScript requirements."
+		},
+		{
+			"taskId": 9,
+			"taskTitle": "Create API resource routes for furigana data",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Create app/routes/api/furiganas.ts with query parameter validation using Zod, 2) Implement GET loader with cursor pagination and error handling, 3) Create app/routes/api/furiganas.$id.ts with single entry GET loader, 4) Update app/routes.ts to add API routes while keeping existing structure",
+			"reasoning": "The project already has an API route pattern (routes/api/health.ts). Creating two new resource routes follows the existing convention. The furiganas list route requires Zod validation for query params (cursor, limit) with proper coercion. The current routes.ts (14 lines) uses react-router's route config which needs updating to include new API routes. React Router v7's data() helper is already used in furigana.$id.tsx. The challenge is proper error handling and response shaping. Moderate complexity."
+		},
+		{
+			"taskId": 10,
+			"taskTitle": "Install shadcn/ui Sidebar component",
+			"complexityScore": 1,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "CLI command task: Run pnpx shadcn@latest add sidebar --defaults, verify installation of sidebar.tsx and dependent components, run type-check",
+			"reasoning": "This is a single CLI command task. The project already uses shadcn/ui (button.tsx, card.tsx, textarea.tsx in app/components/ui/). The shadcn CLI handles all file generation and dependency management automatically. The --defaults flag prevents interactive prompts. Verification is simply checking file existence and running type-check. Minimal complexity."
+		},
+		{
+			"taskId": 11,
+			"taskTitle": "Create AppSidebar component with TanStack Query",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Create component file structure with proper imports from shadcn/ui sidebar primitives, 2) Implement useInfiniteQuery hook with fetchFuriganaList integration, 3) Build skeleton loading state using SidebarMenuSkeleton, 4) Implement entry list rendering with active state highlighting and Link navigation, 5) Add Load more pagination button with isFetchingNextPage handling and empty/error states",
+			"reasoning": "This is the most complex UI component in the milestone. It combines: 1) TanStack Query's useInfiniteQuery with getNextPageParam, 2) shadcn/ui Sidebar primitives (Sidebar, SidebarHeader, SidebarContent, etc.), 3) Multiple UI states (loading, error, empty, data, loading more), 4) React Router Link integration with activeEntryId prop, 5) Proper TypeScript typing for all props and hooks. The component interacts with multiple systems. Testing requires mocking useInfiniteQuery and MSW for integration tests. Higher complexity."
+		},
+		{
+			"taskId": 12,
+			"taskTitle": "Create layout route with QueryClientProvider and SidebarProvider",
+			"complexityScore": 5,
+			"recommendedSubtasks": 4,
+			"expansionPrompt": "Break down into: 1) Create app/routes/layout.tsx with QueryClient instance and QueryClientProvider, 2) Add SidebarProvider wrapping with AppSidebar component, 3) Implement activeEntryId extraction from useParams, 4) Update app/routes.ts to use layout() wrapper for existing routes and update home.tsx/furigana.$id.tsx to remove main wrappers",
+			"reasoning": "This introduces a new architectural pattern - layout routes in React Router v7. The implementation requires: 1) Creating a shared layout with provider nesting (QueryClientProvider > SidebarProvider), 2) Updating routes.ts from flat routes to nested layout routes using React Router's layout() function, 3) Extracting activeEntryId from URL params for sidebar highlighting, 4) Removing duplicate main wrappers from child routes. The coordination between multiple files and understanding React Router v7's layout conventions adds complexity."
+		},
+		{
+			"taskId": 13,
+			"taskTitle": "Implement cache invalidation after new submission",
+			"complexityScore": 4,
+			"recommendedSubtasks": 0,
+			"expansionPrompt": "Single feature addition: Add useEffect in layout.tsx that watches navigation state and invalidates ['furiganas', 'list'] query after successful form submission redirects",
+			"reasoning": "This is a focused feature within the existing layout.tsx. It requires understanding TanStack Query's invalidateQueries API and React Router's useNavigation hook. The implementation involves a useEffect that detects navigation.state === 'idle' after a formAction, then calls queryClient.invalidateQueries. Care needed to avoid unnecessary invalidations. Testing requires verifying cache invalidation timing in integration tests. Moderate complexity but well-scoped."
+		},
+		{
+			"taskId": 14,
+			"taskTitle": "Write comprehensive unit and integration tests",
+			"complexityScore": 7,
+			"recommendedSubtasks": 6,
+			"expansionPrompt": "Break down into: 1) Create pagination.schema.test.ts testing generic factory and cursor validation, 2) Create queries.test.ts with in-memory SQLite setup for all CRUD and pagination tests, 3) Create furiganas.test.ts API client tests with axios-mock-adapter, 4) Update home.test.tsx to mock insertFurigana and test Turso persistence path, 5) Update furigana.$id.test.tsx to mock getFuriganaById with 404 scenarios, 6) Update furigana.service.test.ts for new return shape",
+			"reasoning": "This is a comprehensive testing task spanning multiple test files across different layers. It requires: 1) Setting up in-memory SQLite for Drizzle query tests, 2) Using axios-mock-adapter for API client tests, 3) Updating existing mocks in route tests, 4) Understanding Vitest patterns already used in the codebase (vi.hoisted, vi.mock, beforeEach). The project has strict coverage requirements. The challenge is ensuring all edge cases are covered (soft-delete, cursor stability, validation errors) while maintaining consistent test patterns. Higher complexity due to breadth."
+		},
+		{
+			"taskId": 15,
+			"taskTitle": "Write E2E tests for sidebar and persistence",
+			"complexityScore": 6,
+			"recommendedSubtasks": 5,
+			"expansionPrompt": "Break down into: 1) Create e2e/milestone-2.spec.ts with test setup and database isolation strategy, 2) Write submission and sidebar persistence test, 3) Write sidebar navigation test with multiple entries, 4) Write page reload persistence test, 5) Write cursor pagination 'Load more' test with 25+ entries setup",
+			"reasoning": "E2E testing for this milestone requires: 1) Database state management across tests (clean state or test isolation), 2) Testing async sidebar updates after form submission, 3) Testing cursor-based pagination with 25+ entries (requires significant setup), 4) Understanding existing Playwright patterns from generation.spec.ts (100 lines). The project's playwright.config.ts shows dev server usage which complicates database isolation. The 'Load more' pagination test with 25 entries is particularly complex to set up. Real OpenAI calls may be needed unless properly mocked server-side. Higher complexity."
+		}
+	]
+}
