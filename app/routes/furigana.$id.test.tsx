@@ -110,7 +110,7 @@ describe("furigana route component", () => {
     expect(container.querySelectorAll("ruby")).toHaveLength(2);
     expect(
       consoleErrorSpy.mock.calls.some(([message]) =>
-        String(message).includes("Each child in a list should have a unique \"key\" prop"),
+        String(message).includes('Each child in a list should have a unique "key" prop'),
       ),
     ).toBe(false);
     consoleErrorSpy.mockRestore();

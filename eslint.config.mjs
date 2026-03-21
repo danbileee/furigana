@@ -12,6 +12,7 @@ export default defineConfig([
     "**/coverage/**",
     "**/.react-router/**",
     "**/tsconfig.tsbuildinfo",
+    "pnpm-lock.yaml",
   ]),
 
   // Base TypeScript config for all workspaces

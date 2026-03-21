@@ -141,8 +141,23 @@ body {
   html {
     @apply font-sans;
   }
+  ruby {
+    display: ruby;
+  }
   rt {
+    display: ruby-text;
     font-size: 0.5em;
+    line-height: 1;
     ruby-position: over;
+  }
+  rp {
+    display: none;
+  }
+}
+
+@layer utilities {
+  .reading-view {
+    font-size: 1.125rem;
+    max-width: 65ch;
   }
 }

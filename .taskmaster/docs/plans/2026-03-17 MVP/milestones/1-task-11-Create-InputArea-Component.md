@@ -491,7 +491,10 @@ export async function action({ request }: Route.ActionArgs): Promise<ActionData>
   }
 
   if (textEntry.length > MAX_INPUT_LENGTH) {
-    return { error: `Text exceeds ${MAX_INPUT_LENGTH.toLocaleString()} characters.`, originalText: textEntry };
+    return {
+      error: `Text exceeds ${MAX_INPUT_LENGTH.toLocaleString()} characters.`,
+      originalText: textEntry,
+    };
   }
 
   try {
