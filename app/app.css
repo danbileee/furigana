@@ -141,4 +141,8 @@ body {
   html {
     @apply font-sans;
   }
+  rt {
+    font-size: 0.5em;
+    ruby-position: over;
+  }
 }
