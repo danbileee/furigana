@@ -4,6 +4,7 @@ import { Form, redirect, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/home";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
+import { GENERIC_SERVER_ERROR } from "~/constants/error.const";
 import { MAX_INPUT_LENGTH } from "~/constants/input.const";
 import { cn } from "~/lib/utils";
 import { generateFurigana } from "~/services/furigana.service";
@@ -17,8 +18,6 @@ type ActionError = {
 };
 
 type ActionData = ActionError;
-
-const GENERIC_SERVER_ERROR = "Something went wrong. Please try again.";
 
 export function meta(_: Route.MetaArgs) {
   return [
