@@ -9,6 +9,7 @@ export default defineConfig([
     "**/dist/**",
     "**/node_modules/**",
     "**/build/**",
+    "**/coverage/**",
     "**/.react-router/**",
     "**/tsconfig.tsbuildinfo",
   ]),
@@ -22,9 +23,6 @@ export default defineConfig([
     languageOptions: {
       parser: tsParser,
       parserOptions: {
-        projectService: {
-          allowDefaultProject: ["app/routes/home.test.tsx"],
-        },
         tsconfigRootDir: import.meta.dirname,
       },
     },
