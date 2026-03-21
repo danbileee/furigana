@@ -17,5 +17,10 @@ Files already generated:
 - `1-task-5-Define-FuriganaToken-Types.md` — Task 5 implementation plan
 - `1-task-6-Implement-Annotation-String-Parser.md` — Task 6 implementation plan
 - `1-task-7-Write-Parser-Unit-Tests.md` — Task 7 implementation plan
+- `1-task-10-Implement-Route-Action-for-Furigana-Generation.md` — Task 10 plan
+- `1-task-11-Create-InputArea-Component.md` — Task 11 plan
+- `1-task-12-Create-ReadingView-Component.md` — Task 12 plan
+- `1-task-13-Add-Ruby-CSS-Base-Rules.md` — Task 13 plan
+- `1-task-14-Wire-Home-Route-with-Form-and-Conditional-Rendering.md` — Task 14 plan
 
 The date flag pattern is `2026-03-17` and the full directory name is `2026-03-17 MVP`.
