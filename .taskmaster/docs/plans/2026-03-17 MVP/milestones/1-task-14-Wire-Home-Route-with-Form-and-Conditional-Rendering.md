@@ -406,10 +406,10 @@ These scenarios are defined here for completeness; implementation belongs to Tas
 
 ## Implementation Checklist
 
-- [ ] 1.1 — Update failing test in `home.test.ts`: rename description and change `Location` assertion to `/furigana/${testUuid}` (no query param)
-- [ ] 2.1 — `pnpm test --run` passes: 0 failed, 107 passed
-- [ ] 2.2 — `pnpm type-check` passes: zero errors
-- [ ] 2.3 — `pnpm exec eslint .` passes: zero errors
+- [x] 1.1 — Update failing test in `home.test.ts`: rename description and change `Location` assertion to `/furigana/${testUuid}` (no query param)
+- [x] 2.1 — `pnpm test --run` passes: 0 failed, 107 passed
+- [x] 2.2 — `pnpm type-check` passes: zero errors
+- [x] 2.3 — `pnpm exec eslint .` passes: zero errors
 
 ---
 
