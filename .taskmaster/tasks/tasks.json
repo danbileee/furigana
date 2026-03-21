@@ -171,8 +171,9 @@
         "testStrategy": "Run `pnpm dev`, create test page with <ruby>漢字<rt>かんじ</rt></ruby>, verify furigana appears above kanji text in browser. Test in Chrome, Firefox, Safari.",
         "priority": "medium",
         "dependencies": [],
-        "status": "pending",
-        "subtasks": []
+        "status": "in-progress",
+        "subtasks": [],
+        "updatedAt": "2026-03-21T06:36:15.381Z"
       },
       {
         "id": "14",
@@ -206,7 +207,7 @@
     ],
     "metadata": {
       "version": "1.0.0",
-      "lastModified": "2026-03-21T05:59:27.734Z",
+      "lastModified": "2026-03-21T06:36:15.382Z",
       "taskCount": 15,
       "completedCount": 12,
       "tags": [
