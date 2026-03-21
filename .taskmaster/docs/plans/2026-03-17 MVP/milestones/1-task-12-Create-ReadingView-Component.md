@@ -59,17 +59,17 @@ Implement the reading view rendering layer as a dedicated `/furigana/:id` dynami
 
 ## Codebase Observations
 
-| Observation | Impact on plan |
-|---|---|
-| `home.tsx` currently returns `{ tokens }` from `action` and renders `<ReadingView>` inside the component branch `if (showReadingView)`. | Both the return value and the rendering branch must change. |
-| `app/routes/api/health.ts` uses `data({ ... }, { status: ... })` from `react-router`. | This is the established pattern for returning typed responses from loaders/actions. |
+| Observation                                                                                                                                                            | Impact on plan                                                                                                                                                              |
+| ---------------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `home.tsx` currently returns `{ tokens }` from `action` and renders `<ReadingView>` inside the component branch `if (showReadingView)`.                                | Both the return value and the rendering branch must change.                                                                                                                 |
+| `app/routes/api/health.ts` uses `data({ ... }, { status: ... })` from `react-router`.                                                                                  | This is the established pattern for returning typed responses from loaders/actions.                                                                                         |
 | React Router v7 `redirect()` returns a `Response` with `Location` header — it cannot carry a body accessible to the destination loader without a session or URL param. | The implementation plan uses a server-side in-memory store; the UUID key is passed via the dynamic route segment and `?storage=in-memory` signals which lookup path to use. |
-| `routes.ts` uses `index()` + `route()` from `@react-router/dev/routes`. Adding `/furigana/:id` follows the `route("furigana/:id", "routes/furigana.$id.tsx")` pattern. | Straightforward addition. |
-| `home.test.tsx` mocks `~/components/furigana/ReadingView` explicitly. | Mock must be removed and the test for the `showReadingView` branch must be updated to reflect that the home component no longer renders inline tokens. |
-| `home.test.ts` imports `action` from `./home` and asserts `result` shape as `{ tokens }`. | Action tests must be updated to check for a redirect `Response` with a `/furigana/<uuid>?storage=in-memory` `Location` header. |
-| `vitest.config.ts` sets `environment: "node"` globally. Component tests opt in via `// @vitest-environment jsdom`. | New `furigana.$id.test.tsx` needs the jsdom pragma. |
-| `RubyTokenSchema` uses `yomi` field. Scaffold already uses `token.yomi`. | Keep `yomi` everywhere. No rename needed. |
-| `MAX_INPUT_LENGTH = 10_000` in `app/constants/input.const.ts`. | Worst-case serialized token array is ~469 KB — 117x over the 4 KB cookie limit. Cookie flash is ruled out. |
+| `routes.ts` uses `index()` + `route()` from `@react-router/dev/routes`. Adding `/furigana/:id` follows the `route("furigana/:id", "routes/furigana.$id.tsx")` pattern. | Straightforward addition.                                                                                                                                                   |
+| `home.test.tsx` mocks `~/components/furigana/ReadingView` explicitly.                                                                                                  | Mock must be removed and the test for the `showReadingView` branch must be updated to reflect that the home component no longer renders inline tokens.                      |
+| `home.test.ts` imports `action` from `./home` and asserts `result` shape as `{ tokens }`.                                                                              | Action tests must be updated to check for a redirect `Response` with a `/furigana/<uuid>?storage=in-memory` `Location` header.                                              |
+| `vitest.config.ts` sets `environment: "node"` globally. Component tests opt in via `// @vitest-environment jsdom`.                                                     | New `furigana.$id.test.tsx` needs the jsdom pragma.                                                                                                                         |
+| `RubyTokenSchema` uses `yomi` field. Scaffold already uses `token.yomi`.                                                                                               | Keep `yomi` everywhere. No rename needed.                                                                                                                                   |
+| `MAX_INPUT_LENGTH = 10_000` in `app/constants/input.const.ts`.                                                                                                         | Worst-case serialized token array is ~469 KB — 117x over the 4 KB cookie limit. Cookie flash is ruled out.                                                                  |
 
 ---
 
@@ -495,7 +495,9 @@ it("redirects to /furigana/<uuid>?storage=in-memory on successful generation", a
 
   expect(result).toBeInstanceOf(Response);
   expect((result as Response).status).toBe(302);
-  expect((result as Response).headers.get("Location")).toBe("/furigana/test-uuid-1234?storage=in-memory");
+  expect((result as Response).headers.get("Location")).toBe(
+    "/furigana/test-uuid-1234?storage=in-memory",
+  );
   expect(mockStoreTokens).toHaveBeenCalledWith(tokens);
 });
 ```
@@ -584,11 +586,13 @@ describe("furigana route component", () => {
 
 - **Given**:
   ```ts
-  { tokens: [
-    { type: "text", value: "私は" },
-    { type: "ruby", kanji: "東京", yomi: "とうきょう" },
-    { type: "text", value: "に住んでいます。" },
-  ] }
+  {
+    tokens: [
+      { type: "text", value: "私は" },
+      { type: "ruby", kanji: "東京", yomi: "とうきょう" },
+      { type: "text", value: "に住んでいます。" },
+    ];
+  }
   ```
 - **When**: `render(<Furigana />)`
 - **Then**: The article contains two `<span>` elements and one `<ruby>` element in document order.
@@ -612,10 +616,12 @@ describe("furigana route component", () => {
 
 - **Given**:
   ```ts
-  { tokens: [
-    { type: "ruby", kanji: "山", yomi: "やま" },
-    { type: "ruby", kanji: "山", yomi: "さん" },
-  ] }
+  {
+    tokens: [
+      { type: "ruby", kanji: "山", yomi: "やま" },
+      { type: "ruby", kanji: "山", yomi: "さん" },
+    ];
+  }
   ```
 - **When**: `render(<Furigana />)` with `console.error` spy active.
 - **Then**: No React duplicate-key warnings emitted. Both `<ruby>` elements present.
@@ -758,6 +764,7 @@ The in-memory store approach has no such size limit. It is the correct solution 
 Both localStorage and IndexedDB are browser APIs — they do not exist in Node.js. React Router v7 runs loaders server-side (`ssr: true`). A `loader` that references `localStorage` would throw `ReferenceError: localStorage is not defined` on the server.
 
 They could be used in a `clientLoader` (client-only execution), but this would:
+
 1. Disable SSR for the furigana route, losing the first-render performance and SEO benefits.
 2. Require a loading state while the client hydrates and reads from storage.
 3. Introduce a race condition if the user refreshes before the `clientLoader` completes.
@@ -767,6 +774,7 @@ The server-side in-memory store avoids all of these issues.
 ### In-memory store and distributed deployments
 
 The `Map`-based token store works correctly for single-server Node.js deployments (the target for this MVP). It does not work for:
+
 - Deployments with multiple server instances behind a load balancer (a request from the action and the subsequent request from the loader could hit different instances).
 - Edge/serverless deployments where each request may be a cold start with no shared memory.
 

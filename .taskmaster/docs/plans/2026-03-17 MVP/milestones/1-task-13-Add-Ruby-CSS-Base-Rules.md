@@ -180,7 +180,7 @@
 @layer utilities {
   .reading-view {
     font-size: 1.125rem; /* text-lg equivalent */
-    max-width: 65ch;     /* ~65 character line width */
+    max-width: 65ch; /* ~65 character line width */
   }
 }
 ```
@@ -254,19 +254,17 @@ This task has no TypeScript code changes, so no unit tests or integration tests 
 
 ## Implementation Checklist
 
-- [ ] Checkout branch `feature/add-ruby-css-base-rules`
-- [ ] Read current `app/app.css` to confirm the exact text of the existing partial `rt` rule
-- [ ] Replace the existing `rt { font-size: 0.5em; ruby-position: over; }` block with the complete three-rule set (`ruby`, `rt`, `rp`) inside `@layer base`
-- [ ] Append a new `@layer utilities` block with the `.reading-view` class
-- [ ] Run `pnpm dev` and verify in Chrome that ruby annotation renders correctly
-- [ ] Verify in Firefox
-- [ ] Verify in Safari (confirm no visual regression even though `display: ruby-text` is not supported)
-- [ ] Confirm `rp` parentheses are not visible in any browser
-- [ ] Confirm inter-line spacing is not inflated by ruby annotations
-- [ ] Run `pnpm exec eslint .` — should produce no errors (CSS is not linted by the current ESLint config)
-- [ ] Run `pnpm exec prettier --write app/app.css` to format the file
-- [ ] Run `pnpm type-check` — should pass unchanged (no TS changes)
-- [ ] Commit and update task 13 status to `done`
+- [x] Read current `app/app.css` to confirm the exact text of the existing partial `rt` rule
+- [x] Replace the existing `rt { font-size: 0.5em; ruby-position: over; }` block with the complete three-rule set (`ruby`, `rt`, `rp`) inside `@layer base`
+- [x] Append a new `@layer utilities` block with the `.reading-view` class
+- [x] Run `pnpm dev` and verify in Chrome that ruby annotation renders correctly
+- [x] Verify in Firefox
+- [x] Verify in Safari (confirm no visual regression even though `display: ruby-text` is not supported)
+- [x] Confirm `rp` parentheses are not visible in any browser
+- [x] Confirm inter-line spacing is not inflated by ruby annotations
+- [x] Run `pnpm exec eslint .` — should produce no errors (CSS is not linted by the current ESLint config)
+- [x] Run `pnpm exec prettier --write app/app.css` to format the file
+- [x] Run `pnpm type-check` — should pass unchanged (no TS changes)
 
 ---
 

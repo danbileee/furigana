@@ -25,7 +25,7 @@ export default function FuriganaById() {
     <main className="mx-auto flex min-h-screen w-full max-w-3xl items-center justify-center p-8">
       <article
         lang="ja"
-        className="border-border bg-card w-full rounded-lg border p-6 text-xl leading-relaxed"
+        className="reading-view border-border bg-card w-full rounded-lg border p-6 leading-relaxed"
       >
         {tokens.map((token, index) =>
           token.type === "ruby" ? (
