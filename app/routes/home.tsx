@@ -1,27 +1,22 @@
 import { Loader2 } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Form, useActionData, useNavigation } from "react-router";
+import { Form, redirect, useActionData, useNavigation } from "react-router";
 import type { Route } from "./+types/home";
-import { ReadingView } from "~/components/furigana/ReadingView";
 import { Button } from "~/components/ui/button";
 import { Textarea } from "~/components/ui/textarea";
 import { MAX_INPUT_LENGTH } from "~/constants/input.const";
 import { cn } from "~/lib/utils";
-import type { FuriganaToken } from "~/schema/furigana.schema";
 import { generateFurigana } from "~/services/furigana.service";
+import { setTokens } from "~/services/token-storage.service";
 import { sanitizeUserInput } from "~/lib/furigana/sanitize";
 import { validateJapaneseInput } from "~/lib/furigana/validate";
-
-type ActionSuccess = {
-  tokens: FuriganaToken[];
-};
 
 type ActionError = {
   error: string;
   originalText: string;
 };
 
-type ActionData = ActionSuccess | ActionError;
+type ActionData = ActionError;
 
 const GENERIC_SERVER_ERROR = "Something went wrong. Please try again.";
 
@@ -35,7 +30,7 @@ export function meta(_: Route.MetaArgs) {
   ];
 }
 
-export async function action({ request }: Route.ActionArgs): Promise<ActionData> {
+export async function action({ request }: Route.ActionArgs): Promise<ActionData | Response> {
   const formData = await request.formData();
   const text = formData.get("text")?.toString()?.trim() ?? "";
   const sanitized = sanitizeUserInput(text);
@@ -47,7 +42,9 @@ export async function action({ request }: Route.ActionArgs): Promise<ActionData>
 
   try {
     const tokens = await generateFurigana(sanitized);
-    return { tokens };
+    const id = crypto.randomUUID(); // TODO: replace with tursoDB generated id (milestone-2)
+    setTokens(id, tokens);
+    return redirect(`/furigana/${id}`);
   } catch (error) {
     console.error("Furigana generation error:", error);
     return { error: GENERIC_SERVER_ERROR, originalText: sanitized };
@@ -63,7 +60,6 @@ export default function Home() {
     actionData !== undefined && "error" in actionData ? actionData.error : undefined;
   const actionOriginalText =
     actionData !== undefined && "originalText" in actionData ? actionData.originalText : "";
-  const showReadingView = actionData !== undefined && "tokens" in actionData;
 
   const [text, setText] = useState<string>(actionOriginalText);
 
@@ -75,10 +71,6 @@ export default function Home() {
   useEffect(() => {
     setText(actionOriginalText);
   }, [actionOriginalText]);
-
-  if (showReadingView) {
-    return <ReadingView tokens={actionData.tokens} />;
-  }
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-3xl flex-col items-center justify-center gap-6 p-8">

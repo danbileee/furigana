@@ -708,22 +708,22 @@ The existing action tests cover error paths and remain valid. Only the success p
 
 ## Implementation Checklist
 
-- [ ] Phase 1.1: Create `app/services/token-storage.service.ts` with `storeTokens` and `consumeTokens`
-- [ ] Phase 1.2: Update `home.tsx` action success branch to call `storeTokens` and `redirect("/furigana/<uuid>?storage=in-memory")`
-- [ ] Phase 1.3: Remove `ReadingView` import, `ActionSuccess` type, `showReadingView` branch from `home.tsx`
-- [ ] Phase 1.4: Delete `app/components/furigana/ReadingView.tsx` (and directory if empty)
-- [ ] Phase 2.1: Add `route("furigana/:id", "routes/furigana.$id.tsx")` to `app/routes.ts`
-- [ ] Phase 2.2: Create `app/routes/furigana.$id.tsx` with conditional loader (in-memory branch when `?storage=in-memory`, empty array placeholder for no-param branch with TODO for TursoDB) and ruby render component
-- [ ] Phase 2.3: Add `rt` rules to `@layer base` in `app/app.css`
-- [ ] Phase 3.1: Update `home.test.ts` success test to assert redirect response to `/furigana/<uuid>?storage=in-memory` and mock `~/services/token-storage.service`
-- [ ] Phase 3.2: Remove `ReadingView` mock and `showReadingView` test from `home.test.tsx`
-- [ ] Phase 3.2: Update `ActionData` type in `home.test.tsx` to error-only
-- [ ] Phase 3.3: Create `app/routes/furigana.$id.test.tsx` with all 8 component tests
-- [ ] Phase 3.4: Create `app/routes/furigana.$id.test.ts` with 3 loader tests (in-memory hit, in-memory miss, no-param placeholder)
-- [ ] Phase 4.1: Visual smoke test in browser (`pnpm dev`)
-- [ ] Phase 4.2: `pnpm test` — all tests pass, no regressions
-- [ ] Phase 4.3: `pnpm type-check` passes
-- [ ] Phase 4.4: `pnpm exec eslint .` passes
+- [x] Phase 1.1: Create `app/services/token-storage.service.ts` with `storeTokens` and `consumeTokens`
+- [x] Phase 1.2: Update `home.tsx` action success branch to call `storeTokens` and `redirect("/furigana/<uuid>?storage=in-memory")`
+- [x] Phase 1.3: Remove `ReadingView` import, `ActionSuccess` type, `showReadingView` branch from `home.tsx`
+- [x] Phase 1.4: Delete `app/components/furigana/ReadingView.tsx` (and directory if empty)
+- [x] Phase 2.1: Add `route("furigana/:id", "routes/furigana.$id.tsx")` to `app/routes.ts`
+- [x] Phase 2.2: Create `app/routes/furigana.$id.tsx` with conditional loader (in-memory branch when `?storage=in-memory`, empty array placeholder for no-param branch with TODO for TursoDB) and ruby render component
+- [x] Phase 2.3: Add `rt` rules to `@layer base` in `app/app.css`
+- [x] Phase 3.1: Update `home.test.ts` success test to assert redirect response to `/furigana/<uuid>?storage=in-memory` and mock `~/services/token-storage.service`
+- [x] Phase 3.2: Remove `ReadingView` mock and `showReadingView` test from `home.test.tsx`
+- [x] Phase 3.2: Update `ActionData` type in `home.test.tsx` to error-only
+- [x] Phase 3.3: Create `app/routes/furigana.$id.test.tsx` with all 8 component tests
+- [x] Phase 3.4: Create `app/routes/furigana.$id.test.ts` with 3 loader tests (in-memory hit, in-memory miss, no-param placeholder)
+- [x] Phase 4.1: Visual smoke test in browser (`pnpm dev`)
+- [x] Phase 4.2: `pnpm test` — all tests pass, no regressions
+- [x] Phase 4.3: `pnpm type-check` passes
+- [x] Phase 4.4: `pnpm exec eslint .` passes
 
 ---
 

@@ -3,17 +3,12 @@ import { fireEvent, render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MAX_INPUT_LENGTH } from "../constants/input.const";
-import type { FuriganaToken } from "../schema/furigana.schema";
 import { NON_JAPANESE_INPUT_ERROR } from "../constants/furigana.const";
 
-type ActionData =
-  | {
-      tokens: FuriganaToken[];
-    }
-  | {
-      error: string;
-      originalText: string;
-    };
+type ActionData = {
+  error: string;
+  originalText: string;
+};
 
 const { mockUseActionData, mockUseNavigation } = vi.hoisted(() => ({
   mockUseActionData: vi.fn<() => ActionData | undefined>(),
@@ -35,12 +30,6 @@ vi.mock("react-router", async () => {
     UNSAFE_withComponentProps: <T,>(component: React.ComponentType<T>) => component,
   };
 });
-
-vi.mock("~/components/furigana/ReadingView", () => ({
-  ReadingView: ({ tokens }: { tokens: FuriganaToken[] }) => (
-    <div data-testid="reading-view">ReadingView tokens: {tokens.length}</div>
-  ),
-}));
 
 vi.mock("~/components/ui/button", () => ({
   Button: (props: React.ComponentProps<"button">) => <button {...props} />,
@@ -120,16 +109,6 @@ describe("home route component", () => {
 
     expect(screen.getByRole("alert").textContent).toContain(NON_JAPANESE_INPUT_ERROR);
     expect(getTextarea().value).toBe("hello and にほんご");
-  });
-
-  it("renders ReadingView when action succeeds", () => {
-    mockUseActionData.mockReturnValue({
-      tokens: [{ type: "ruby", kanji: "日本語", yomi: "にほんご" }],
-    });
-    render(<Home />);
-
-    screen.getByTestId("reading-view");
-    expect(screen.queryByLabelText("Japanese text input")).toBeNull();
   });
 
   it("uses a submit button and enables it for valid input", () => {

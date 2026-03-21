@@ -7,8 +7,16 @@ const { mockGenerateFurigana } = vi.hoisted(() => ({
   mockGenerateFurigana: vi.fn(),
 }));
 
+const { mockSetTokens } = vi.hoisted(() => ({
+  mockSetTokens: vi.fn<(id: string, tokens: FuriganaToken[]) => void>(),
+}));
+
 vi.mock("~/services/furigana.service", () => ({
   generateFurigana: mockGenerateFurigana,
+}));
+
+vi.mock("~/services/token-storage.service", () => ({
+  setTokens: mockSetTokens,
 }));
 
 import { action } from "./home";
@@ -38,17 +46,27 @@ function createActionArgs(request: Request): Parameters<typeof action>[0] {
 describe("home action", () => {
   beforeEach(() => {
     mockGenerateFurigana.mockReset();
+    mockSetTokens.mockReset();
   });
 
-  it("returns tokens for valid input", async () => {
+  it("redirects to /furigana/<uuid>?storage=in-memory on successful generation", async () => {
     const tokens: FuriganaToken[] = [{ type: "ruby", kanji: "日本語", yomi: "にほんご" }];
     mockGenerateFurigana.mockResolvedValueOnce(tokens);
+    const testUuid = "123e4567-e89b-12d3-a456-426614174000";
+
+    const randomUUIDSpy = vi.spyOn(crypto, "randomUUID").mockReturnValueOnce(testUuid);
 
     const result = await action(createActionArgs(createFormRequest("日本語")));
 
-    expect(result).toMatchObject({ tokens: expect.any(Array) });
-    expect(result).toEqual({ tokens });
+    expect(result).toBeInstanceOf(Response);
+    if (!(result instanceof Response)) {
+      throw new Error("Expected action to return a redirect response.");
+    }
+    expect(result.status).toBe(302);
+    expect(result.headers.get("Location")).toBe(`/furigana/${testUuid}?storage=in-memory`);
     expect(mockGenerateFurigana).toHaveBeenCalledWith("日本語");
+    expect(mockSetTokens).toHaveBeenCalledWith(testUuid, tokens);
+    randomUUIDSpy.mockRestore();
   });
 
   it("trims whitespace and forwards sanitized text to service", async () => {
